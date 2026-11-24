@@ -1,12 +1,8 @@
 <!-- ═══════════════════════════════════════════════════════════════
      index.html  ·  Suivi Réunion Prestataire
-     Structure du dépôt GitHub Pages :
-       index.html   (ce fichier)
-       styles.css   (design system + responsive)
-       themes.js    (moteur de thèmes — fichier séparé)
-       app.js       (logique applicative + Firebase)
-     Accès : connexion uniquement. Les comptes sont créés par
-     l'administrateur dans Firebase Console → Authentication → Users.
+     Dépôt GitHub Pages : index.html · styles.css · themes.js · app.js
+     Accès : connexion uniquement. Comptes créés par l'administrateur
+     dans Firebase Console → Authentication → Users → Add user.
      ═══════════════════════════════════════════════════════════════ -->
 <!DOCTYPE html>
 <html lang="fr" data-theme="chaleureux" data-density="confort">
@@ -57,20 +53,8 @@
           <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••" required>
           <button type="button" class="eye" data-eye="loginPass" aria-label="Afficher le mot de passe"></button></div></div>
         <button class="btn btn-primary auth-submit" id="loginBtn" type="submit">Se connecter</button>
-        <div class="auth-links"><button type="button" class="link-btn" id="toReset">Mot de passe oublié ?</button><button type="button" class="link-btn" id="accessBtn">Demander un accès</button></div>
-
-        <div class="access-note" id="accessNote">
-          <span class="an-ico"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2.5"/></svg></span>
-          <div class="an-txt">
-            <strong>Accès sur invitation</strong>
-            <p>Les comptes sont créés par l’administrateur du site. Aucune inscription n’est possible depuis cette page.</p>
-            <button type="button" class="btn btn-ghost btn-sm" id="accessCopy">Copier une demande d’accès</button>
-          </div>
-        </div>
-
-        <div class="auth-divider">ou</div>
-        <button type="button" class="btn btn-ghost auth-local" id="localLink">Continuer sans compte (mode local)</button>
-        <p class="auth-foot"><button type="button" class="link-btn" id="authSetup">Assistant Firebase</button></p>
+        <button class="btn btn-ghost auth-submit" id="authRetry" type="button" hidden>Réessayer la connexion</button>
+        <div class="auth-links"><button type="button" class="link-btn" id="toReset">Mot de passe oublié ?</button><span></span></div>
       </form>
 
       <form id="resetForm" hidden novalidate>
@@ -165,10 +149,7 @@
     <aside class="rail" id="rail" aria-label="Synthèse et outils">
       <section class="panel">
         <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Synthèse</h4>
-        <div class="donut-row">
-          <div class="donut-wrap" id="donutWrap"></div>
-          <div class="legend" id="legend"></div>
-        </div>
+        <div class="donut-row"><div class="donut-wrap" id="donutWrap"></div><div class="legend" id="legend"></div></div>
         <div class="prio-bars" id="prioBars"></div>
       </section>
       <section class="panel">
@@ -255,33 +236,6 @@
       <div><h5 class="news-h info">Pistes pour la suite</h5><ul class="news-list" id="newsNext"></ul></div>
     </div>
     <div class="form-actions"><button class="btn btn-primary" id="newsClose" type="button">C'est parti</button></div>
-  </div>
-</div>
-
-<!-- ══════════ ASSISTANT FIREBASE ══════════ -->
-<div class="modal-overlay" id="setupOverlay" hidden role="dialog" aria-modal="true" aria-label="Configuration Firebase">
-  <div class="modal">
-    <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4.5"/></svg>Assistant Firebase</h2>
-    <p class="sub">Projet <b>geoparts-11556</b>. L’application n’offre aucune inscription : les comptes se créent uniquement dans la console.</p>
-    <ol class="setup-steps">
-      <li><span><b>Authentication → Sign-in method</b> : activez <b>Email/Mot de passe</b>.</span></li>
-      <li><span><b>Authentication → Settings → User actions</b> : décochez <b>Enable create (sign-up)</b>. Toute création de compte devient impossible, même par requête directe.</span></li>
-      <li><span><b>Authentication → Users → Add user</b> : créez chaque compte autorisé (email + mot de passe) puis transmettez les identifiants à la personne.</span></li>
-      <li><span><b>Firestore Database</b> : créez la base puis publiez ces règles :
-        <div class="code-block" id="rulesBlock">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{uid} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == uid;
-    }
-  }
-}<button class="copy-btn" data-copy="rulesBlock" type="button">Copier</button></div></span></li>
-      <li><span><b>Authentication → Settings → Authorized domains</b> : ajoutez <b>votre-pseudo.github.io</b>.</span></li>
-    </ol>
-    <div class="form-field"><label for="configPaste">Autre projet : collez son firebaseConfig</label><textarea id="configPaste" spellcheck="false"></textarea></div>
-    <div class="auth-error" id="configError" hidden></div>
-    <div class="form-actions"><button class="btn btn-ghost" id="setupCancel" type="button">Fermer</button><button class="btn btn-ghost" id="configClear" type="button" hidden>Retirer</button><button class="btn btn-primary" id="configSave" type="button">Enregistrer &amp; connecter</button></div>
   </div>
 </div>
 
