@@ -1,9 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
-   app.js  ·  Version finale — commentaires datés par point
-   Connexion obligatoire. Liaisons tolérantes aux éléments absents
-   pour qu'un fichier en cache ne puisse plus vider l'écran.
+   app.js  ·  Suivi Réunion Prestataire — PWA
+   Points, priorités, discussions datées, vues, sélection, undo,
+   synchronisation Firebase, installation et mode hors ligne.
    ═══════════════════════════════════════════════════════════════ */
-import { THEMES, DEFAULT_PREFS, themeList, getTheme, applyFontScale, applyAllPrefs } from './themes.js?v=6';
+import { THEMES, DEFAULT_PREFS, themeList, getTheme, applyFontScale, applyAllPrefs } from './themes.js?v=7';
+import { initPWA } from './pwa.js?v=7';
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC74VWRr6EQSkQN-DB6IOkvH7ezhllPwiE",
@@ -15,8 +16,8 @@ const FIREBASE_CONFIG = {
 };
 const FB_BASE = 'https://www.gstatic.com/firebasejs/10.12.2/';
 const GLPI = 'https://mikefri.github.io/Ticket_GLPI/ticket-detail.html?id=dReeI9UA5p6FffQvJVtX';
-const K = { V5:'reunionPrestataireV5', V4:'reunionPrestataireV4', NEWS:'reunionNewsSeen6' };
-const PROTECTED = new Set(['rfx','dpx','geoparts','mag2','petcop','glpi','qrqc','codir','mahe','luc','st eloi','saint eloi','caristes','cariste','manut','embarques','embarquer','essieux','essieu','douchettes','douchette','kits','kit']);
+const K = { V5:'reunionPrestataireV5', V4:'reunionPrestataireV4', NEWS:'reunionNewsSeen7' };
+const PROTECTED = new Set(['rfx','dpx','geoparts','mag2','petcop','glpi','qrqc','codir','mahe','luc','st eloi','saint eloi','caristes','cariste','manut','embarques','embarquer','essieux','essieu','douchettes','douchette','kits','kit','pwa']);
 const NOW = Date.now(), H = 3600000, D = 86400000;
 
 const STATUS = [
@@ -57,25 +58,25 @@ const SEED_VIEWS = [
   { id:'v4', name:'Soldés', view:'compact', status:'done', prio:'all', q:'', sort:'date-desc' }
 ];
 const NEWS_DONE = [
-  ['Commentaires datés','un fil de discussion par point : auteur, horodatage, publication immédiate, suppression avec annulation, synchronisé entre postes.'],
-  ['Dernier échange visible','la carte affiche le dernier commentaire et le nombre d’échanges ; tri « Discussion » pour voir les points les plus actifs.'],
-  ['Recherche étendue','la recherche porte aussi sur le contenu des commentaires.'],
-  ['Compte rendu complet','l’impression et l’export CSV emportent la discussion datée de chaque point.'],
+  ['Application installable','bouton Installer, icône plein écran, fenêtre autonome sans barre d’adresse, sur Windows, Android, macOS et iOS.'],
+  ['Fonctionne hors ligne','l’app shell, les thèmes et le SDK Firebase sont mis en cache : l’application s’ouvre sans réseau et vos écritures partent au retour.'],
+  ['Mises à jour maîtrisées','nouvelle version téléchargée en silence, toast « Recharger » quand elle est prête, vérification manuelle dans le panneau Application.'],
+  ['Badge sur l’icône','le nombre de points à faire s’affiche sur l’icône de l’application installée, désactivable d’un clic.'],
+  ['Raccourcis d’application','clic droit sur l’icône : Nouveau point, Points urgents, Vue Tableau. Partage d’un lien vers l’app pour créer un point.'],
+  ['Panneau Application','état d’installation, version du cache, stockage utilisé, stockage durable et purge du cache.'],
+  ['Commentaires datés','fil de discussion par point : auteur, horodatage, publication immédiate, suppression avec annulation.'],
+  ['Dernier échange visible','la carte montre le dernier commentaire ; tri « Discussion » pour les points les plus actifs.'],
   ['Connexion obligatoire','aucun mode local, aucune inscription : seuls les comptes créés par l’administrateur accèdent à l’application.'],
-  ['Mise en page large écran','jusqu’à 1800 px : deux colonnes de cartes au-delà de 1560 px, rail de synthèse collant.'],
-  ['Trois vues réelles','Liste, Tableau kanban par statut, Compacte.'],
-  ['Glisser-déposer','réordonner à la poignée, ou déposer dans une colonne pour changer le statut.'],
-  ['Tiroir de détail','édition complète, navigation précédent / suivant, brouillon de commentaire conservé.'],
-  ['Sélection multiple','statut, priorité ou suppression en une fois, avec annulation.'],
-  ['Vues enregistrées','filtre + tri + vue mémorisés sous un nom.'],
-  ['Thèmes externalisés','themes.js : 6 palettes, accent, densité, taille du texte, contraste.'],
-  ['Robustesse au cache','liaisons tolérantes et bannière d’alerte : un fichier périmé ne peut plus vider l’écran.']
+  ['Large écran & responsive','jusqu’à 1800 px, deux colonnes de cartes, rail collant, zones sûres iOS respectées.'],
+  ['Trois vues & glisser-déposer','Liste, Tableau kanban, Compacte ; réordonnancement et changement de statut par glisser.'],
+  ['Sélection multiple & undo','statut, priorité ou suppression en lot, toujours annulable.'],
+  ['Export & import','JSON complet avec discussions, CSV pour Excel, réimport confirmé.']
 ];
 const NEWS_NEXT = [
-  ['Notification par email','prévenir les participants quand un commentaire est publié sur un point suivi.'],
+  ['Notifications push','être prévenu à la publication d’un commentaire ou la veille de la réunion (Web Push + Firebase Functions).'],
+  ['Synchronisation en arrière-plan','envoyer les écritures dès que le réseau revient, même application fermée (Background Sync).'],
+  ['Pièces jointes','photo de palette ou capture d’anomalie dans un commentaire, consultable hors ligne.'],
   ['Mentions @personne','alerter nommément un collègue dans le fil.'],
-  ['Pièces jointes','photo de palette ou capture d’anomalie dans un commentaire (Firebase Storage).'],
-  ['Rappels avant réunion','email automatique la veille avec les points encore ouverts.'],
   ['Mode Réunion','plein écran point par point, piloté au clavier.'],
   ['Récurrence','point hebdomadaire qui revient à chaque réunion.'],
   ['Tags libres','étiqueter par site ou thème (RFX, MAG2, quai…) et filtrer.'],
@@ -87,10 +88,9 @@ const NEWS_NEXT = [
 let S = { points:[], meetingDate:'', prefs:{...DEFAULT_PREFS}, savedViews:[], activity:[], updatedAt:0 };
 const ui = { q:'', status:'all', prio:'all', sort:'manual', activeView:null, sel:new Set(), drawerId:null, dragId:null,
   pendingDelete:null, cancelConfirm:null, printMode:false, firstRender:true, drafts:new Map(), freshCmt:null };
-let fb=null, user=null, unsub=null, firstSnap=true, cloudTimer=null, pendingRemote=null, pendingTimer=null, syncState='local', lastApi=0;
+let fb=null, user=null, unsub=null, firstSnap=true, cloudTimer=null, pendingRemote=null, pendingTimer=null, syncState='local', lastApi=0, pwa=null;
 const acTimers = new WeakMap();
 
-/* ── Helpers DOM tolérants ── */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const on = (sel,ev,fn,opt) => { const el=$(sel); if(el) el.addEventListener(ev,fn,opt); return el; };
@@ -99,6 +99,7 @@ const txt = (sel,v) => { const el=$(sel); if(el) el.textContent=v; };
 const val = (sel,v) => { const el=$(sel); if(el) el.value=v; };
 const chk = (sel,v) => { const el=$(sel); if(el) el.checked=!!v; };
 const hide = (sel,v) => { const el=$(sel); if(el) el.hidden=!!v; };
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 const esc = s => { const d=document.createElement('div'); d.textContent=s??''; return d.innerHTML; };
 const escA = s => esc(s).replace(/"/g,'&quot;');
@@ -160,9 +161,10 @@ function toast(msg,{type='ok',duration=3800}={}){
   host.appendChild(t);
   setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},duration);
 }
-function richToast({title,sub,actions,hint,duration,icon=TRASH_ANIM,confirm=false,onClose}){
+function richToast({title,sub,actions,hint,duration,icon=TRASH_ANIM,confirm=false,kind,onClose}){
   const host=$('#toastHost'); if(!host){onClose?.(null);return{close(){}};}
-  const t=document.createElement('div'); t.className='toast toast-rich'+(confirm?' toast-confirm':'');
+  const t=document.createElement('div');
+  t.className='toast toast-rich'+(confirm?' toast-confirm':'')+(kind==='update'?' toast-update':'');
   t.setAttribute('role',confirm?'alertdialog':'alert');
   t.innerHTML=`<div class="tr-ico">${icon}</div><div class="tr-body"><div class="tr-title">${esc(title)}</div><div class="tr-sub" title="${escA(sub)}">${esc(sub)}</div></div>
     <div class="tc-actions"></div><button class="tr-close" type="button" aria-label="Fermer">${IC.x}</button>
@@ -172,7 +174,8 @@ function richToast({title,sub,actions,hint,duration,icon=TRASH_ANIM,confirm=fals
   function close(key){ if(dead)return; dead=true; clearTimeout(timer); document.removeEventListener('keydown',onKey);
     t.classList.add('out'); setTimeout(()=>t.remove(),300); onClose?.(key); }
   function onKey(e){ if(e.key==='Escape') close(actions.find(a=>a.safe)?.key??null); }
-  actions.forEach(a=>{ const b=document.createElement('button'); b.type='button'; b.className='tc-btn '+(a.kind==='ok'?'tc-ok':'tc-cancel');
+  actions.forEach(a=>{ const b=document.createElement('button'); b.type='button';
+    b.className='tc-btn '+(a.kind==='ok'?'tc-ok':a.kind==='go'?'tc-go':'tc-cancel');
     b.innerHTML=(a.icon||'')+esc(a.label); b.onclick=()=>close(a.key); box.appendChild(b); if(a.safe) setTimeout(()=>b.focus(),90); });
   t.querySelector('.tr-close').onclick=()=>close(null);
   document.addEventListener('keydown',onKey);
@@ -209,7 +212,7 @@ function hydrate(d){
 function persistLocal(){ try{ localStorage.setItem(K.V5,JSON.stringify(S)); }catch{} }
 function save(log){
   S.updatedAt=Date.now(); if(log)pushActivity(log); persistLocal(); render();
-  txt('#saveIndicator','✓ Enregistré à '+new Date().toLocaleTimeString('fr-FR'));
+  txt('#saveIndicator', navigator.onLine ? '✓ Enregistré à '+new Date().toLocaleTimeString('fr-FR') : '✓ Enregistré hors ligne — envoi au retour du réseau');
   if(fb&&user)queueCloud();
 }
 function pushActivity({type,label}){ S.activity.unshift({ts:Date.now(),type,label}); S.activity=S.activity.slice(0,60); }
@@ -254,6 +257,7 @@ function render(){
     <span class="stat-pill grow"><b>${pct}%</b><span class="mini-track"><span class="mini-fill" style="width:${pct}%"></span></span>${c.done}/${c.all}</span>`);
   txt('#printDate','Compte rendu de réunion — '+fmtDate(S.meetingDate));
   renderDonut(c,pct); renderPrioBars(c); renderRailCmt(); renderViews(); renderActivity(); renderBulk();
+  pwa?.setBadge(c.todo);
   const list=ui.printMode?S.points:visible(); const box=$('#pointsView');
   if(!box){ ui.firstRender=false; return; }
   box.className='points-view view-'+view;
@@ -323,7 +327,7 @@ function compactHTML(list){
         <span class="cp-acts"><button class="btn-icon" data-act="open" data-id="${p.id}" type="button" title="Ouvrir" aria-label="Ouvrir">${IC.pencil}</button><button class="btn-icon danger" data-act="del" data-id="${p.id}" type="button" title="Supprimer" aria-label="Supprimer">${IC.trash}</button></span></div>`; }).join('');
 }
 
-/* ── Mutations points ── */
+/* ── Mutations ── */
 function cycleStatus(id){ const p=byId(id); if(!p)return; const i=STATUS.findIndex(s=>s.label===p.status); p.status=STATUS[(i+1)%3].label; save({type:'status',label:`« ${p.title} » → ${p.status}`}); pulse(`[data-act="status"][data-id="${id}"]`); }
 function cyclePrio(id){ const p=byId(id); if(!p)return; const i=PRIO.findIndex(x=>x.key===prioOf(p).key); p.priority=PRIO[(i+1)%3].key; save({type:'prio',label:`Priorité ${prioOf(p).label} · « ${p.title} »`}); pulse(`[data-act="prio"][data-id="${id}"]`); }
 function pulse(sel){ const b=document.querySelector(sel); if(b){ b.classList.add('pulse'); b.addEventListener('animationend',()=>b.classList.remove('pulse'),{once:true}); } }
@@ -349,6 +353,13 @@ function reallyDelete(ids){
 function askBulkDelete(){ const ids=[...ui.sel]; if(!ids.length)return;
   richToast({ title:`Supprimer ${ids.length} points ?`, sub:ids.map(i=>byId(i)?.title).filter(Boolean).join(' · '), confirm:true, duration:8000, hint:'Sans réponse, rien ne sera effacé',
     actions:[{key:'cancel',label:'Annuler',safe:true},{key:'ok',label:'Supprimer',kind:'ok',icon:IC.trash}], onClose:k=>{ if(k==='ok')reallyDelete(ids); } }); }
+function openAdd(prefill){
+  const f=$('#addForm'); if(!f)return;
+  f.hidden=false; val('#newDate',todayISO());
+  if(prefill){ val('#newTitle',prefill.title||''); val('#newDesc',prefill.desc||''); }
+  $('#newTitle')?.focus();
+  f.scrollIntoView({behavior:'smooth',block:'center'});
+}
 function addPoint(){
   const t=$('#newTitle')?.value.trim()||'', d=$('#newDesc')?.value.trim()||'', dt=$('#newDate')?.value||'', st=$('#newStatus')?.value||'À faire';
   if(!t){ toast('Veuillez saisir un titre.',{type:'err'}); $('#newTitle')?.focus(); return; }
@@ -387,7 +398,7 @@ function openDrawer(id,discuss=false){
       </div>
     </section>`);
   hide('#drawer',false); hide('#drawerScrim',false);
-  const ta=$('#drComment'); if(ta){ ta.value=ui.drafts.get(id)||''; }
+  const ta=$('#drComment'); if(ta) ta.value=ui.drafts.get(id)||'';
   renderThread(); updateComposer();
   setTimeout(()=>{
     if(discuss){ $('#drDiscuss')?.scrollIntoView({behavior:'smooth',block:'start'}); $('#drComment')?.focus(); }
@@ -405,10 +416,8 @@ function saveDrawer(){
   save({type:'edit',label:`« ${p.title} » modifié`}); toast('Point enregistré.'); closeDrawer();
 }
 function navDrawer(dir){ const list=visible(); if(!list.length)return; let i=list.findIndex(x=>x.id===ui.drawerId); i=i<0?0:(i+dir+list.length)%list.length; openDrawer(list[i].id); }
-
 function renderThread(){
-  const box=$('#drThread'); const p=byId(ui.drawerId);
-  const cs=cmts(p);
+  const box=$('#drThread'); const p=byId(ui.drawerId); const cs=cmts(p);
   txt('#drCount',String(cs.length));
   html('#drawerCmt',cs.length?`${IC.chat}<span>${cs.length}</span>`:'');
   if(!box)return;
@@ -426,10 +435,7 @@ function renderThread(){
   }).join('') : `<div class="thread-empty">${IC.chat}<span>Aucun commentaire pour l’instant. Ouvrez la discussion ci-dessous : chaque échange est daté et signé.</span></div>`;
   box.scrollTop=box.scrollHeight;
 }
-function updateComposer(){
-  const ta=$('#drComment'), btn=$('#drCommentSend');
-  if(btn) btn.disabled=!(ta&&ta.value.trim().length>0);
-}
+function updateComposer(){ const ta=$('#drComment'), btn=$('#drCommentSend'); if(btn) btn.disabled=!(ta&&ta.value.trim().length>0); }
 function addComment(){
   const p=byId(ui.drawerId); if(!p)return;
   const ta=$('#drComment'); if(!ta)return;
@@ -437,10 +443,9 @@ function addComment(){
   if(!text){ toast('Écrivez un commentaire avant de publier.',{type:'err'}); ta.focus(); return; }
   p.comments=cmts(p);
   p.comments.push({ id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ts:Date.now(), author:me(), text });
-  ta.value=''; ui.drafts.delete(p.id); updateComposer();
-  ui.freshCmt=p.id;
+  ta.value=''; ui.drafts.delete(p.id); updateComposer(); ui.freshCmt=p.id;
   save({type:'cmt',label:`Commentaire de ${authorName(me())} sur « ${p.title} »`});
-  renderThread(); toast('Commentaire publié.'); ta.focus();
+  renderThread(); toast(navigator.onLine?'Commentaire publié.':'Commentaire enregistré hors ligne.'); ta.focus();
 }
 function askDeleteComment(cid){
   const p=byId(ui.drawerId); if(!p)return;
@@ -473,13 +478,14 @@ function movePoint(id,targetId,before,statusKey){
 
 /* ── Correction ── */
 function scheduleAuto(ta){
-  if(!S.prefs.autoCorrect)return; clearTimeout(acTimers.get(ta));
+  if(!S.prefs.autoCorrect||!navigator.onLine)return; clearTimeout(acTimers.get(ta));
   acTimers.set(ta,setTimeout(()=>{ const v=ta.value; if(ta.selectionStart===v.length&&/[\s.,;:!?)\n]/.test(v.slice(-1))&&v.trim().length>3&&v!==ta.dataset.lastCorrected)correct(ta,true); },1200));
 }
 async function correct(ta,silent){
   const wrap=ta.closest('.notes-wrapper'); if(!wrap)return;
   const btn=wrap.querySelector('.btn-correct'),ind=wrap.querySelector('.correction-indicator'),text=ta.value;
   if(!text.trim()||!btn||btn.disabled)return;
+  if(!navigator.onLine){ if(!silent&&ind){ ind.textContent='⚠️ Hors ligne'; ind.className='correction-indicator visible'; setTimeout(()=>ind.className='correction-indicator',2500); } return; }
   const wait=Math.max(0,1400-(Date.now()-lastApi)); if(wait)await new Promise(r=>setTimeout(r,wait)); lastApi=Date.now();
   const cursor=ta.selectionStart,focus=document.activeElement===ta;
   btn.disabled=true; const old=btn.innerHTML; btn.innerHTML='<span class="spinner"></span>';
@@ -530,7 +536,8 @@ function renderThemeGrid(){ html('#themeGrid',themeList().map(t=>`<button type="
 function syncAppearanceUI(){ renderThemeGrid(); val('#accentPick',S.prefs.accent||getTheme(S.prefs.theme).v.accent); txt('#accentHint',S.prefs.accent?'Accent personnalisé actif':'Accent du thème');
   $$('#densitySeg .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.density===S.prefs.density));
   val('#fontRange',S.prefs.fontScale); txt('#fontVal',S.prefs.fontScale+' %'); chk('#motionToggle',S.prefs.motion); chk('#contrastToggle',S.prefs.contrast); chk('#autoToggle',S.prefs.autoCorrect); }
-function setPref(patch,{rerender=true}={}){ Object.assign(S.prefs,patch); applyAllPrefs(S.prefs); if(rerender)save(); }
+function pushThemeColor(){ pwa?.setThemeColor(cssVar('--surface')); }
+function setPref(patch,{rerender=true}={}){ Object.assign(S.prefs,patch); applyAllPrefs(S.prefs); pushThemeColor(); if(rerender)save(); }
 
 /* ── Firebase ── */
 async function initFirebase(){
@@ -546,19 +553,35 @@ async function initFirebase(){
 }
 function connectionFailed(){
   showAuth('login');
-  authErr('login','Connexion au service impossible. Vérifiez votre réseau puis réessayez.');
+  authErr('login', navigator.onLine
+    ? 'Connexion au service impossible. Vérifiez votre réseau puis réessayez.'
+    : 'Hors ligne et modules pas encore en cache. Ouvrez l’application une fois en ligne, puis elle démarrera sans réseau.');
   const b=$('#loginBtn'); if(b)b.disabled=true; hide('#authRetry',false);
+}
+function applyIntent(it){
+  if(!it)return;
+  if(it.kind==='new') openAdd();
+  else if(it.kind==='board') setPref({view:'board'});
+  else if(it.kind==='urgent'){ if(S.savedViews.some(v=>v.id==='v1')) applySavedView('v1'); else { ui.prio='haute'; ui.sort='priority'; val('#prioFilter','haute'); val('#sortSelect','priority'); render(); } }
+  else if(it.kind==='share'){
+    const p=it.payload||{};
+    const body=[p.text,p.url].filter(Boolean).join('\n');
+    openAdd({ title:(p.title||p.text||'Point partagé').slice(0,120), desc:body });
+    toast('Contenu partagé placé dans un nouveau point.');
+  }
 }
 function handleAuth(u){
   if(unsub){unsub();unsub=null;} user=u; firstSnap=true; pendingRemote=null;
   if(u){
-    hide('#authOverlay',true); hide('#app',false); updateAccount(); setSync('syncing');
+    hide('#authOverlay',true); hide('#app',false); updateAccount(); setSync(navigator.onLine?'syncing':'offline');
     unsub=fb.fs.onSnapshot(fb.fs.doc(fb.db,'users',u.uid),snap=>{
       if(firstSnap){ firstSnap=false; if(!snap.exists()){pushCloud();return;} if(!snap.metadata.hasPendingWrites)applyRemote(snap.data(),true); else setSync('synced'); return; }
       if(snap.metadata.hasPendingWrites)return; const d=snap.data(); if(!d)return;
       if((d.updatedAt||0)<=S.updatedAt){setSync('synced');return;}
       if(typing()){pendingRemote=d;schedulePending();}else applyRemote(d,false);
-    },err=>{console.warn(err);setSync('error');});
+    },err=>{ console.warn(err); setSync(navigator.onLine?'error':'offline'); });
+    applyIntent(pwa?.takeIntent());
+    pwa?.refreshPanel();
   }else{ hide('#app',true); hide('#authOverlay',false); showAuth('login'); updateAccount(); }
 }
 function typing(){ const a=document.activeElement; return a&&/^(TEXTAREA|INPUT)$/.test(a.tagName)&&$('#app')?.contains(a); }
@@ -567,7 +590,7 @@ function applyRemote(d,force){
   if(!force&&(d.updatedAt||0)<=S.updatedAt)return;
   if(ui.cancelConfirm)ui.cancelConfirm();
   const openId=ui.drawerId;
-  S=hydrate(d); persistLocal(); applyAllPrefs(S.prefs);
+  S=hydrate(d); persistLocal(); applyAllPrefs(S.prefs); pushThemeColor();
   val('#meetingDate',S.meetingDate); syncAppearanceUI();
   ui.sel=new Set([...ui.sel].filter(id=>byId(id)));
   render(); setSync('synced');
@@ -575,8 +598,9 @@ function applyRemote(d,force){
   txt('#saveIndicator','✓ Synchronisé depuis le cloud');
   if(!force)toast('Mise à jour reçue d’un autre appareil.');
 }
-async function pushCloud(){ if(!fb||!user)return; setSync('syncing'); try{ await fb.fs.setDoc(fb.fs.doc(fb.db,'users',user.uid),S,{merge:true}); setSync('synced'); }catch(e){console.warn(e);setSync('error');} }
-function queueCloud(){ setSync('syncing'); clearTimeout(cloudTimer); cloudTimer=setTimeout(pushCloud,750); }
+async function pushCloud(){ if(!fb||!user)return; if(!navigator.onLine){ setSync('offline'); return; } setSync('syncing');
+  try{ await fb.fs.setDoc(fb.fs.doc(fb.db,'users',user.uid),S,{merge:true}); setSync('synced'); }catch(e){console.warn(e);setSync(navigator.onLine?'error':'offline');} }
+function queueCloud(){ if(!navigator.onLine){ setSync('offline'); return; } setSync('syncing'); clearTimeout(cloudTimer); cloudTimer=setTimeout(pushCloud,750); }
 function flushCloud(){ if(fb&&user){clearTimeout(cloudTimer);pushCloud();} }
 function setSync(s){ syncState=s; const b=$('#syncBadge'); if(!b)return;
   const m={synced:['synced',IC.cloud,'Synchronisé'],syncing:['syncing',IC.sync,'Sync…'],error:['error',IC.warn,'Erreur sync'],offline:['',IC.cloudOff,'Hors ligne'],local:['',IC.cloudOff,'Connexion…']};
@@ -634,11 +658,11 @@ function bind(){
   on('#prioFilter','change',e=>{ui.prio=e.target.value;ui.activeView=null;render();});
   on('#sortSelect','change',e=>{ui.sort=e.target.value;ui.activeView=null;render();});
   on('#viewSwitch','click',e=>{const b=e.target.closest('[data-view]');if(!b)return;setPref({view:b.dataset.view});});
-  on('#railToggle','click',()=>document.body.classList.toggle('rail-open'));
+  on('#railToggle','click',()=>{document.body.classList.toggle('rail-open');pwa?.refreshPanel();});
   on('#meetingDate','change',e=>{S.meetingDate=e.target.value;save();});
   on('#printBtn','click',()=>window.print());
 
-  on('#addToggle','click',()=>{const f=$('#addForm');if(!f)return;f.hidden=!f.hidden;if(!f.hidden){val('#newDate',todayISO());$('#newTitle')?.focus();}});
+  on('#addToggle','click',()=>{const f=$('#addForm');if(!f)return;if(f.hidden)openAdd();else f.hidden=true;});
   on('#addCancel','click',()=>hide('#addForm',true));
   on('#addSave','click',addPoint);
   on('#newPrio','click',e=>{const b=e.target.closest('.prio-opt');if(b)setPrio($('#newPrio'),b.dataset.prio);});
@@ -664,9 +688,7 @@ function bind(){
     if(e.target.id==='drComment'){ ui.drafts.set(ui.drawerId,e.target.value); updateComposer(); }
     if(e.target.matches('textarea.notes'))scheduleAuto(e.target);
   });
-  on('#drawerBody','keydown',e=>{
-    if(e.target.id==='drComment'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); addComment(); }
-  });
+  on('#drawerBody','keydown',e=>{ if(e.target.id==='drComment'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); addComment(); } });
 
   on('#bulkClose','click',()=>{ui.sel.clear();render();});
   on('#bulkAll','click',()=>{visible().forEach(p=>ui.sel.add(p.id));render();});
@@ -723,7 +745,7 @@ function bind(){
   on('#backLogin2','click',()=>showAuth('login'));
   $$('.eye').forEach(b=>{b.innerHTML=IC.eye;b.onclick=()=>{const i=$('#'+b.dataset.eye);if(!i)return;const s=i.type==='password';i.type=s?'text':'password';b.innerHTML=s?IC.eyeOff:IC.eye;};});
   ['loginEmail','loginPass','resetEmail'].forEach(i=>on('#'+i,'input',clearAuthErr));
-  on('#bootReload','click',()=>location.reload(true));
+  on('#bootReload','click',()=>location.reload());
 
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
@@ -736,14 +758,14 @@ function bind(){
     if(typing()||e.metaKey||e.ctrlKey||e.altKey)return;
     if($('#app')?.hidden)return;
     if(e.key==='/'){e.preventDefault();$('#searchInput')?.focus();}
-    if(e.key.toLowerCase()==='n'){e.preventDefault();$('#addToggle')?.click();}
+    if(e.key.toLowerCase()==='n'){e.preventDefault();openAdd();}
     if(['1','2','3'].includes(e.key))setPref({view:{'1':'list','2':'board','3':'compact'}[e.key]});
   });
   window.addEventListener('scroll',()=>$('#topbar')?.classList.toggle('scrolled',scrollY>8),{passive:true});
-  window.addEventListener('online',()=>{if(user){setSync('syncing');flushCloud();}});
-  window.addEventListener('offline',()=>{if(user)setSync('offline');});
+  window.addEventListener('online',()=>{if(user){setSync('syncing');flushCloud();}txt('#saveIndicator','✓ Connexion rétablie');});
+  window.addEventListener('offline',()=>{if(user)setSync('offline');txt('#saveIndicator','✓ Hors ligne — écritures conservées');});
   window.addEventListener('pagehide',flushCloud);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushCloud();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushCloud();else pwa?.refreshPanel();});
   window.addEventListener('beforeprint',()=>{ui.printMode=true;render();});
   window.addEventListener('afterprint',()=>{ui.printMode=false;render();});
   setInterval(()=>{ if(!$('#drawer')?.hidden)renderThread(); renderActivity(); renderRailCmt(); },60000);
@@ -758,11 +780,18 @@ try{
   html('#newsNext',NEWS_NEXT.map(([t,d])=>`<li><span><b>${esc(t)}</b> — ${esc(d)}</span></li>`).join(''));
   try{ if(localStorage.getItem(K.NEWS))$('#newsBtn')?.classList.add('seen'); }catch{}
   syncAppearanceUI(); bind(); render();
+  pwa = initPWA({
+    toast, richToast,
+    badgeCount: ()=>counts().todo,
+    onConnectivity: on=>{ if(user) setSync(on?(syncState==='offline'?'syncing':syncState):'offline'); }
+  });
+  pushThemeColor();
+  pwa.setBadge(counts().todo);
   hide('#app',true); hide('#authOverlay',false); showAuth('loading');
   initFirebase().then(ok=>{ if(!ok)connectionFailed(); });
 }catch(err){
   console.error(err);
-  txt('#bootErrorMsg','Un fichier est périmé dans le cache du navigateur. Rechargez sans cache (Ctrl+F5) — vos données restent dans Firestore.');
+  txt('#bootErrorMsg','Un fichier est périmé dans le cache. Rechargez sans cache (Ctrl+F5) — vos données restent dans Firestore.');
   hide('#bootError',false);
   try{ render(); }catch{}
 }
