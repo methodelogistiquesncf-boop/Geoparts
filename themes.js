@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
    themes.js  ·  Moteur de thèmes (fichier séparé)
-   Pour ajouter une palette : dupliquez une entrée de THEMES.
    ═══════════════════════════════════════════════════════════════ */
 export const THEMES = {
   chaleureux: {
@@ -54,23 +53,4 @@ export function themeList(){ return Object.entries(THEMES).map(([id,t])=>({id,..
 export function applyTheme(id){ const t=getTheme(id); for(const [k,v] of Object.entries(t.v)) root.style.setProperty('--'+kebab(k),v); root.dataset.theme=id; root.style.colorScheme=t.dark?'dark':'light'; return t; }
 export function applyAccent(hex){
   if(!hex){ const t=getTheme(root.dataset.theme); root.style.setProperty('--accent',t.v.accent); root.style.setProperty('--accent2',t.v.accent2); root.style.setProperty('--on-accent',t.v.onAccent); return; }
-  const [h,s,l]=hexToHsl(hex); const acc2=hslToHex((h+26)%360,Math.min(96,s+6),Math.min(72,l+12));
-  root.style.setProperty('--accent',hex); root.style.setProperty('--accent2',acc2); root.style.setProperty('--on-accent',l>62?'#1a1208':'#fffaf3');
-}
-export function applyDensity(mode){ root.dataset.density = mode==='compact'?'compact':'confort'; }
-export function applyFontScale(pct){ const p=Math.min(122,Math.max(88,+pct||100)); root.style.fontSize=(16*p/100).toFixed(2)+'px'; return p; }
-export function applyMotion(on){ root.dataset.motion = on?'on':'off'; }
-export function applyContrast(on){ root.dataset.contrast = on?'high':'normal'; }
-export function applyAllPrefs(p){ applyTheme(p.theme); applyAccent(p.accent); applyDensity(p.density); applyFontScale(p.fontScale); applyMotion(p.motion); applyContrast(p.contrast); }
-export function hexToHsl(hex){
-  let c=hex.replace('#',''); if(c.length===3)c=c.split('').map(x=>x+x).join('');
-  const r=parseInt(c.slice(0,2),16)/255,g=parseInt(c.slice(2,4),16)/255,b=parseInt(c.slice(4,6),16)/255;
-  const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2;
-  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h/=6; }
-  return [Math.round(h*360),Math.round(s*100),Math.round(l*100)];
-}
-export function hslToHex(h,s,l){
-  s/=100;l/=100; const k=n=>(n+h/30)%12; const a=s*Math.min(l,1-l);
-  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
-  const to=x=>Math.round(255*x).toString(16).padStart(2,'0'); return '#'+to(f(0))+to(f(8))+to(f(4));
-}
+  const [h,s,l]=hexToHsl(hex); const acc2=hslToHex((h+26)%360,Math
