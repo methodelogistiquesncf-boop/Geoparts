@@ -1,0 +1,57 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     offline.html  ·  Repli de navigation quand l'app shell n'est
+     pas encore en cache. Autonome : aucune ressource externe.
+     ═══════════════════════════════════════════════════════════════ -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hors ligne — Suivi Réunion Prestataire</title>
+<meta name="theme-color" content="#f6ecdf">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6ecdf;color:#2e2013;min-height:100vh;display:grid;place-items:center;padding:1.5rem;line-height:1.6}
+body::before{content:'';position:fixed;inset:-20%;z-index:-1;background:radial-gradient(38% 34% at 18% 12%,rgba(188,82,21,.22),transparent 70%),radial-gradient(34% 30% at 84% 20%,rgba(224,164,55,.24),transparent 70%),radial-gradient(40% 36% at 60% 92%,rgba(122,116,60,.14),transparent 70%)}
+.card{width:min(34rem,100%);background:#fffdf8;border:1px solid #e5d2b8;border-radius:20px;padding:2rem;box-shadow:0 14px 34px rgba(96,58,20,.16);text-align:center}
+.logo{width:4rem;height:4rem;margin:0 auto 1.1rem;border-radius:18px;background:linear-gradient(135deg,#a8410f,#e8b34a);display:grid;place-items:center}
+.logo svg{width:2.2rem;height:2.2rem;stroke:#fff8ef;fill:none;stroke-width:3.2;stroke-linecap:round}
+h1{font-family:Georgia,serif;font-size:1.5rem;margin-bottom:.5rem}
+p{font-size:.9rem;color:#6d5638;margin-bottom:1rem}
+.state{display:inline-flex;align-items:center;gap:.45rem;font:600 .78rem 'Inter',sans-serif;padding:.4rem .8rem;border-radius:14px;background:#fbeecb;color:#a06a08;border:1px solid #ecd28a;margin-bottom:1.2rem}
+.state svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round}
+.state.on{background:#e2efd9;color:#3d7a34;border-color:#b9d8a8}
+button,a.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.7rem 1.2rem;border:none;border-radius:10px;font:600 .9rem 'Inter',sans-serif;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#bc5215,#e0a437);color:#fff8ef;box-shadow:0 3px 12px rgba(188,82,21,.25)}
+button:hover,a.btn:hover{transform:translateY(-1px)}
+ul{list-style:none;text-align:left;font-size:.82rem;color:#6d5638;display:flex;flex-direction:column;gap:.5rem;margin:1.2rem 0}
+li{display:flex;gap:.55rem}
+li::before{content:'';width:.4rem;height:.4rem;border-radius:50%;background:#bc5215;margin-top:.55rem;flex:none}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 14h18M11 20h18M11 26h11"/><circle cx="28.5" cy="26" r="2.4" fill="#fff8ef" stroke="none"/></svg></div>
+  <h1>Vous êtes hors ligne</h1>
+  <div class="state" id="st"><svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .4-9A6 6 0 0 0 6.2 8.5 4.5 4.5 0 0 0 6.5 19z"/><path d="m4 4 16 16"/></svg><span id="stTxt">Réseau indisponible</span></div>
+  <p>L’application n’a pas encore été mise en cache sur cet appareil. Ouvrez-la une fois en ligne, puis elle démarrera même sans réseau.</p>
+  <ul>
+    <li>Vos points, notes et commentaires restent enregistrés localement.</li>
+    <li>Les modifications faites hors ligne partent automatiquement au retour du réseau.</li>
+    <li>Installez l’application pour un démarrage immédiat, hors ligne compris.</li>
+  </ul>
+  <button id="retry" type="button">Réessayer</button>
+  <a class="btn" href="./index.html" style="margin-left:.5rem;background:#f7efe2;color:#6d5638;border:1px solid #e5d2b8;box-shadow:none">Ouvrir l’application</a>
+</main>
+<script>
+function paint(){
+  var on=navigator.onLine, st=document.getElementById('st');
+  st.className='state'+(on?' on':'');
+  document.getElementById('stTxt').textContent=on?'Réseau rétabli':'Réseau indisponible';
+}
+document.getElementById('retry').addEventListener('click',function(){ location.replace('./index.html'); });
+addEventListener('online',function(){ paint(); setTimeout(function(){ location.replace('./index.html'); },600); });
+addEventListener('offline',paint);
+paint();
+</script>
+</body>
+</html>
