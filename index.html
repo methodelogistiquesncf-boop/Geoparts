@@ -5,6 +5,8 @@
        styles.css   (design system + responsive)
        themes.js    (moteur de thèmes — fichier séparé)
        app.js       (logique applicative + Firebase)
+     Accès : connexion uniquement. Les comptes sont créés par
+     l'administrateur dans Firebase Console → Authentication → Users.
      ═══════════════════════════════════════════════════════════════ -->
 <!DOCTYPE html>
 <html lang="fr" data-theme="chaleureux" data-density="confort">
@@ -12,7 +14,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Suivi Réunion Geoparts</title>
+<title>Suivi Réunion Prestataire — Geoparts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,12 +30,12 @@
   <div class="auth-card">
     <aside class="auth-brand">
       <svg width="46" height="46" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.45)"/><path d="M11 14h18M11 20h18M11 26h11" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="28.5" cy="26" r="3.6" fill="#fff"/></svg>
-      <h1 class="auth-title">Suivi Réunion<br>Geoparts</h1>
+      <h1 class="auth-title">Suivi Réunion<br>Prestataire</h1>
       <p class="auth-tag">Ordre du jour, priorités, notes et actions — synchronisés sur tous vos postes.</p>
       <div class="auth-feats">
         <div><svg class="ic" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .4-9A6 6 0 0 0 6.2 8.5 4.5 4.5 0 0 0 6.5 19z"/><path d="m9 13 2 2 4-4"/></svg>Synchronisation Firebase temps réel</div>
         <div><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>Vues Liste, Tableau et Compacte</div>
-        <div><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Correction orthographique intégrée</div>
+        <div><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4.5"/></svg>Accès réservé aux comptes autorisés</div>
       </div>
       <div class="auth-mock" aria-hidden="true">
         <div class="mock-card"><span class="mock-dot" style="background:#ffd98a"></span>Dashboard caristes<span style="margin-left:auto;opacity:.85">En cours</span></div>
@@ -43,6 +45,7 @@
     </aside>
     <section class="auth-panel">
       <div id="authLoading" class="auth-loading"><span class="spinner"></span>Vérification de la session…</div>
+
       <form id="loginForm" hidden novalidate>
         <h2>Connexion</h2><p class="sub">Retrouvez votre réunion synchronisée.</p>
         <div class="auth-error" id="authError" hidden></div>
@@ -54,28 +57,22 @@
           <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••" required>
           <button type="button" class="eye" data-eye="loginPass" aria-label="Afficher le mot de passe"></button></div></div>
         <button class="btn btn-primary auth-submit" id="loginBtn" type="submit">Se connecter</button>
-        <div class="auth-links"><button type="button" class="link-btn" id="toReset">Mot de passe oublié ?</button><button type="button" class="link-btn" id="toSignup">Créer un compte →</button></div>
+        <div class="auth-links"><button type="button" class="link-btn" id="toReset">Mot de passe oublié ?</button><button type="button" class="link-btn" id="accessBtn">Demander un accès</button></div>
+
+        <div class="access-note" id="accessNote">
+          <span class="an-ico"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2.5"/></svg></span>
+          <div class="an-txt">
+            <strong>Accès sur invitation</strong>
+            <p>Les comptes sont créés par l’administrateur du site. Aucune inscription n’est possible depuis cette page.</p>
+            <button type="button" class="btn btn-ghost btn-sm" id="accessCopy">Copier une demande d’accès</button>
+          </div>
+        </div>
+
         <div class="auth-divider">ou</div>
         <button type="button" class="btn btn-ghost auth-local" id="localLink">Continuer sans compte (mode local)</button>
         <p class="auth-foot"><button type="button" class="link-btn" id="authSetup">Assistant Firebase</button></p>
       </form>
-      <form id="signupForm" hidden novalidate>
-        <h2>Créer un compte</h2><p class="sub">Vos données restent privées et synchronisées.</p>
-        <div class="auth-error" id="authError2" hidden></div>
-        <div class="auth-field"><label for="signupEmail">Adresse email</label>
-          <div class="auth-input"><span class="lead"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg></span>
-          <input type="email" id="signupEmail" autocomplete="email" placeholder="vous@entreprise.fr" required></div></div>
-        <div class="auth-field"><label for="signupPass">Mot de passe <span class="hint">(6 caractères min.)</span></label>
-          <div class="auth-input"><span class="lead"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-          <input type="password" id="signupPass" autocomplete="new-password" placeholder="••••••••" required minlength="6">
-          <button type="button" class="eye" data-eye="signupPass" aria-label="Afficher le mot de passe"></button></div></div>
-        <div class="auth-field"><label for="signupPass2">Confirmer le mot de passe</label>
-          <div class="auth-input"><span class="lead"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-          <input type="password" id="signupPass2" autocomplete="new-password" placeholder="••••••••" required>
-          <button type="button" class="eye" data-eye="signupPass2" aria-label="Afficher le mot de passe"></button></div></div>
-        <button class="btn btn-primary auth-submit" id="signupBtn" type="submit">Créer mon compte</button>
-        <div class="auth-links"><span></span><button type="button" class="link-btn" id="toLogin">← J'ai déjà un compte</button></div>
-      </form>
+
       <form id="resetForm" hidden novalidate>
         <h2>Mot de passe oublié</h2><p class="sub">Recevez un lien de réinitialisation par email.</p>
         <div class="auth-error" id="authError3" hidden></div>
@@ -83,8 +80,10 @@
           <div class="auth-input"><span class="lead"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg></span>
           <input type="email" id="resetEmail" autocomplete="email" placeholder="vous@entreprise.fr" required></div></div>
         <button class="btn btn-primary auth-submit" id="resetBtn" type="submit">Envoyer le lien</button>
+        <p class="reset-note">Seuls les comptes déjà créés par l’administrateur peuvent recevoir un lien.</p>
         <div class="auth-links"><button type="button" class="link-btn" id="backLogin">← Retour à la connexion</button><span></span></div>
       </form>
+
       <div id="sentView" hidden class="sent-box">
         <div class="sent-icon"><svg class="ic" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11"/></svg></div>
         <h2>Email envoyé</h2>
@@ -250,7 +249,7 @@
 <div class="modal-overlay" id="newsModal" hidden role="dialog" aria-modal="true" aria-label="Nouveautés">
   <div class="modal modal-wide">
     <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Ce qui change &amp; ce qu'on peut encore faire</h2>
-    <p class="sub">Version large écran, responsive et modulaire.</p>
+    <p class="sub">Accès verrouillé, mise en page large écran, responsive et modulaire.</p>
     <div class="news-cols">
       <div><h5 class="news-h ok">Livré dans cette version</h5><ul class="news-list" id="newsDone"></ul></div>
       <div><h5 class="news-h info">Pistes pour la suite</h5><ul class="news-list" id="newsNext"></ul></div>
@@ -263,9 +262,11 @@
 <div class="modal-overlay" id="setupOverlay" hidden role="dialog" aria-modal="true" aria-label="Configuration Firebase">
   <div class="modal">
     <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4.5"/></svg>Assistant Firebase</h2>
-    <p class="sub">Projet <b>geoparts-11556</b> déjà intégré. Cet assistant ne sert que si vous changez de projet.</p>
+    <p class="sub">Projet <b>geoparts-11556</b>. L’application n’offre aucune inscription : les comptes se créent uniquement dans la console.</p>
     <ol class="setup-steps">
       <li><span><b>Authentication → Sign-in method</b> : activez <b>Email/Mot de passe</b>.</span></li>
+      <li><span><b>Authentication → Settings → User actions</b> : décochez <b>Enable create (sign-up)</b>. Toute création de compte devient impossible, même par requête directe.</span></li>
+      <li><span><b>Authentication → Users → Add user</b> : créez chaque compte autorisé (email + mot de passe) puis transmettez les identifiants à la personne.</span></li>
       <li><span><b>Firestore Database</b> : créez la base puis publiez ces règles :
         <div class="code-block" id="rulesBlock">rules_version = '2';
 service cloud.firestore {
