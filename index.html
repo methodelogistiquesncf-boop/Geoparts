@@ -21,8 +21,8 @@
 <meta name="apple-mobile-web-app-title" content="Réunion">
 <meta name="msapplication-TileColor" content="#bc5215">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20rx='115'%20fill='%23bc5215'/%3E%3Cg%20fill='%23fff8ef'%3E%3Crect%20x='77'%20y='130'%20width='358'%20height='43'%20rx='21'/%3E%3Crect%20x='77'%20y='220'%20width='358'%20height='43'%20rx='21'/%3E%3Crect%20x='77'%20y='310'%20width='215'%20height='43'%20rx='21'/%3E%3Ccircle%20cx='367'%20cy='331'%20r='28'/%3E%3C/g%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20fill='%23bc5215'/%3E%3Cg%20fill='%23fff8ef'%3E%3Crect%20x='108'%20y='150'%20width='296'%20height='35'%20rx='17'/%3E%3Crect%20x='108'%20y='223'%20width='296'%20height='35'%20rx='17'/%3E%3Crect%20x='108'%20y='296'%20width='178'%20height='35'%20rx='17'/%3E%3Ccircle%20cx='348'%20cy='313'%20r='23'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%23a8410f'/%3E%3Cstop%20offset='.5'%20stop-color='%23c96a1a'/%3E%3Cstop%20offset='1'%20stop-color='%23e8b34a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='512'%20height='512'%20rx='115'%20fill='url(%23g)'/%3E%3Cg%20fill='%23fff8ef'%3E%3Crect%20x='77'%20y='130'%20width='358'%20height='43'%20rx='21.5'/%3E%3Crect%20x='77'%20y='220'%20width='358'%20height='43'%20rx='21.5'/%3E%3Crect%20x='77'%20y='310'%20width='215'%20height='43'%20rx='21.5'/%3E%3Ccircle%20cx='367'%20cy='331.5'%20r='28.4'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20fill='%23bc5215'/%3E%3Cg%20fill='%23fff8ef'%3E%3Crect%20x='77'%20y='130'%20width='358'%20height='43'%20rx='21.5'/%3E%3Crect%20x='77'%20y='220'%20width='358'%20height='43'%20rx='21.5'/%3E%3Crect%20x='77'%20y='310'%20width='215'%20height='43'%20rx='21.5'/%3E%3Ccircle%20cx='367'%20cy='331.5'%20r='28.4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -102,7 +102,7 @@
   <header class="topbar" id="topbar">
     <div class="shell-inner topbar-inner">
       <div class="brand">
-        <svg width="36" height="36" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent2)"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#lgB)"/><path d="M11 14h18M11 20h18M11 26h11" stroke="var(--on-accent)" stroke-width="3.2" stroke-linecap="round"/><circle cx="28.5" cy="26" r="3.6" fill="var(--on-accent)"/></svg>
+        <svg width="36" height="36" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent,#bc5215)"/><stop offset="1" stop-color="var(--accent2,#e0a437)"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#lgB)"/><path d="M11 14h18M11 20h18M11 26h11" stroke="var(--on-accent,#fff8ef)" stroke-width="3.2" stroke-linecap="round"/><circle cx="28.5" cy="26" r="3.6" fill="var(--on-accent,#fff8ef)"/></svg>
         <div class="brand-txt">
           <div class="brand-name">Suivi Réunion Prestataire <span class="app-badge" id="appBadge" hidden>App</span></div>
           <div class="brand-sub">Ordre du jour, priorités &amp; suivi des actions</div>
@@ -175,6 +175,12 @@
         <div class="rail-cmt" id="railCmt"></div>
       </section>
 
+      <section class="panel" id="diagPanel">
+        <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4.5"/></svg>Diagnostic</h4>
+        <ul class="diag" id="diagList"></ul>
+        <button class="btn btn-ghost btn-block btn-sm" id="diagRun" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 3v4h-4"/></svg>Relancer le diagnostic</button>
+      </section>
+
       <section class="panel" id="pwaPanel">
         <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3"/></svg>Application</h4>
         <div class="pwa-state" id="pwaState"></div>
@@ -183,7 +189,6 @@
           <div class="pwa-row"><span>Mode hors ligne</span><b id="pwaOffline">…</b></div>
           <div class="pwa-row"><span>Version du cache</span><b id="pwaVersion">…</b></div>
           <div class="pwa-row"><span>Stockage local</span><b id="pwaStorage">…</b></div>
-          <div class="pwa-row"><span>Moteur de thèmes</span><b id="pwaThemes">…</b></div>
         </div>
         <div class="meter" title="Occupation du stockage autorisé"><i id="pwaMeter"></i></div>
         <label class="toggle-pill toggle-block" title="Affiche le nombre de points à faire sur l'icône de l'application"><input type="checkbox" id="pwaBadge" checked>Badge sur l’icône</label>
@@ -287,7 +292,7 @@
 <div class="modal-overlay" id="newsModal" hidden role="dialog" aria-modal="true" aria-label="Nouveautés">
   <div class="modal modal-wide">
     <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Ce qui change &amp; ce qu'on peut encore faire</h2>
-    <p class="sub">Version PWA v8 : chargement blindé, zéro fichier d’icône externe, discussions datées.</p>
+    <p class="sub">Version PWA : installable, hors ligne, discussions datées, large écran et responsive.</p>
     <div class="news-cols">
       <div><h5 class="news-h ok">Livré dans cette version</h5><ul class="news-list" id="newsDone"></ul></div>
       <div><h5 class="news-h info">Pistes pour la suite</h5><ul class="news-list" id="newsNext"></ul></div>
@@ -297,25 +302,6 @@
 </div>
 
 <div class="toast-host" id="toastHost" aria-live="polite"></div>
-
 <script type="module" src="./app.js?v=8"></script>
-<script>
-/* Filet de sécurité indépendant des modules : si un module ne s'exécute
-   pas (erreur de syntaxe, 404, cache périmé), on l'affiche au lieu de
-   laisser un écran vide. */
-(function(){
-  var btn = document.getElementById('bootReload');
-  if (btn) btn.addEventListener('click', function(){ location.reload(); });
-  setTimeout(function(){
-    var chips = document.getElementById('chips');
-    var box = document.getElementById('bootError');
-    var msg = document.getElementById('bootErrorMsg');
-    if (chips && chips.children.length === 0 && box && msg){
-      msg.textContent = "Un fichier JavaScript ne s’exécute pas (erreur de syntaxe, fichier manquant ou cache périmé). Ouvrez la console pour la ligne exacte, puis rechargez sans cache avec Ctrl+F5.";
-      box.hidden = false;
-    }
-  }, 2500);
-})();
-</script>
 </body>
 </html>
