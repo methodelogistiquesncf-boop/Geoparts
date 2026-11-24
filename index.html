@@ -156,12 +156,34 @@ svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-wid
 @keyframes pop{from{opacity:0;transform:scale(.97) translateY(-6px)}to{opacity:1;transform:none}}
 .add-form h3{font-family:'Fraunces',serif;color:var(--accent);font-size:1.05rem;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-field{margin-bottom:12px}
 .form-field label{display:block;font-size:.78rem;font-weight:600;color:var(--soft);margin-bottom:5px}
 .form-field input,.form-field textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:9px;
   font:400 .9rem 'Inter',sans-serif;background:var(--surface2);color:var(--ink);transition:border .2s,box-shadow .2s}
 .form-field input:focus,.form-field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--glow1)}
 .form-field textarea{min-height:74px;resize:vertical}
 .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+
+/* ═══════════ PRIORITÉS ═══════════ */
+.prio-seg{display:flex;gap:7px;flex-wrap:wrap}
+.prio-opt{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface2);color:var(--soft);font:600 .82rem 'Inter',sans-serif;transition:all .18s}
+.prio-opt .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.prio-opt[data-prio="haute"] .dot{background:var(--danger)}
+.prio-opt[data-prio="moyenne"] .dot{background:var(--warn)}
+.prio-opt[data-prio="basse"] .dot{background:var(--info)}
+.prio-opt:hover{border-color:var(--muted)}
+.prio-opt.selected[data-prio="haute"]{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bd);box-shadow:0 0 0 3px var(--danger-bg)}
+.prio-opt.selected[data-prio="moyenne"]{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-bd);box-shadow:0 0 0 3px var(--warn-bg)}
+.prio-opt.selected[data-prio="basse"]{background:var(--info-bg);color:var(--info);border-color:var(--info-bd);box-shadow:0 0 0 3px var(--info-bg)}
+.prio-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:12px;cursor:pointer;
+  font:600 .7rem 'Inter',sans-serif;font-style:normal;border:1px solid transparent;transition:all .18s;user-select:none}
+.prio-badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.prio-badge:hover{transform:scale(1.06)}
+.prio-badge.pulse{animation:pulse .45s ease}
+.prio-haute{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bd)}
+.prio-moyenne{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-bd)}
+.prio-basse{background:var(--info-bg);color:var(--info);border-color:var(--info-bd)}
 
 /* ═══════════ CARTES DE POINTS ═══════════ */
 .point-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--todo-bd);
@@ -176,8 +198,9 @@ svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-wid
 .point-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
 .point-meta{flex:1;min-width:210px}
 .point-title{font-size:1.06rem;font-weight:700;letter-spacing:-.01em;line-height:1.35}
-.point-date{display:flex;align-items:center;gap:5px;font-size:.73rem;color:var(--muted);font-style:italic;margin-top:3px}
+.point-date{display:flex;align-items:center;gap:5px;font-size:.73rem;color:var(--muted);font-style:italic;margin-top:4px;flex-wrap:wrap}
 .point-date svg{width:13px;height:13px}
+.point-date .prio-badge{margin-left:7px}
 .point-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .status-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;font:600 .8rem 'Inter',sans-serif;
   cursor:pointer;border:1px solid transparent;transition:all .18s;user-select:none}
@@ -334,6 +357,7 @@ textarea.notes:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3p
   textarea.notes{display:none}
   .print-notes{display:block;white-space:pre-wrap;font-size:.88rem;color:#222;padding:10px 12px;border:1px dashed #bbb;border-radius:8px;margin-top:10px;min-height:20px}
   .status-badge{border:1px solid #999}
+  .prio-badge{border:1px solid #999}
 }
 </style>
 </head>
@@ -496,10 +520,20 @@ service cloud.firestore {
         <input type="search" id="searchInput" placeholder="Rechercher un point, une note…" aria-label="Rechercher">
       </div>
       <div class="chips" id="chips" role="group" aria-label="Filtrer par statut"></div>
+      <div class="sort-box" title="Filtrer par priorité">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M5 21V4m0 0h12l-3 4 3 4H5"/></svg>
+        <select id="prioFilter" aria-label="Filtrer par priorité">
+          <option value="all">Toutes priorités</option>
+          <option value="haute">Haute</option>
+          <option value="moyenne">Moyenne</option>
+          <option value="basse">Basse</option>
+        </select>
+      </div>
       <div class="sort-box">
         <svg class="ic" viewBox="0 0 24 24"><path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/></svg>
         <select id="sortSelect" aria-label="Trier">
           <option value="date-asc">Date ↑</option><option value="date-desc">Date ↓</option>
+          <option value="priority">Priorité</option>
           <option value="status">Statut</option><option value="title">Titre A→Z</option>
         </select>
       </div>
@@ -513,10 +547,18 @@ service cloud.firestore {
     <div class="add-form" id="addForm" hidden>
       <h3><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Nouveau point</h3>
       <div class="form-row">
-        <div class="form-field"><label for="newTitle">Titre du point</label>
+        <div class="form-field" style="margin-bottom:0"><label for="newTitle">Titre du point</label>
           <input type="text" id="newTitle" spellcheck="true" placeholder="Ex : Point 9 — Nouveau sujet"></div>
-        <div class="form-field"><label for="newDate">Date d'ajout</label>
+        <div class="form-field" style="margin-bottom:0"><label for="newDate">Date d'ajout</label>
           <input type="date" id="newDate"></div>
+      </div>
+      <div class="form-field">
+        <label>Priorité</label>
+        <div class="prio-seg" id="newPrio" data-value="moyenne" role="group" aria-label="Choisir la priorité">
+          <button type="button" class="prio-opt" data-prio="haute" aria-pressed="false"><span class="dot"></span>Haute</button>
+          <button type="button" class="prio-opt selected" data-prio="moyenne" aria-pressed="true"><span class="dot"></span>Moyenne</button>
+          <button type="button" class="prio-opt" data-prio="basse" aria-pressed="false"><span class="dot"></span>Basse</button>
+        </div>
       </div>
       <div class="form-field"><label for="newDesc">Description / Contexte</label>
         <div class="notes-wrapper" style="margin-top:0">
@@ -558,24 +600,30 @@ const STORAGE_KEY='reunionPrestataireV4', THEME_KEY='reunionTheme', AUTO_KEY='re
 const PROTECTED = new Set(['rfx','dpx','geoparts','mag2','petcop','glpi','qrqc','codir','mahe','luc','st eloi','saint eloi','caristes','cariste','manut','embarques','embarquer','essieux','essieu','douchettes','douchette']);
 
 const DEFAULT_POINTS = [
- {id:1,title:"Point 1 : Info agent & mouvements supports",desc:"Comment retrouver qui a fait des prélèvements et quand ?\n⚠️ Prérequis : Avoir les droits suffisants dans RFX.",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:2,title:"Point 2 : Dashboard pilotage caristes",desc:"• Mouvements à faire / faits par jour\n• Visuel nuit complète (présence agent oui/non)\n• Historique > 1 mois\n• Détail synthétisé par agent/support avec ratio",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:3,title:"Point 3 : Traitement anomalies (Luc)",desc:"Nettoyage des procédures d'embarquement (actuellement non traitées).\n⚠️ Problème : Si anomalie corrigée, la ligne reste rouge. Comment informer Geoparts pour la passer au vert ?",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:4,title:"Point 4 : Manut RFX & DPX (Resp: Mahe)",desc:"Les DPX créent des manuts sans mettre les palettes au départ (mouvements indus).\n• Piste : Correction auto ? Ajouter date de création du bon manut sur les embarques.\n• Action : Rappeler le geste métier (déplacement physique d'abord, bonne manut ensuite).",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:5,title:"Point 5 : Fluidité MAG2 et St Eloi",desc:"Problème de rétention et envoi 'en masse' qui déstabilise GEOPARTS.\n• Action : QRQC à faire. Suivi amélioration organisation nécessaire.",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:6,title:"Point 6 : Commande matériel",desc:"Commande de 3 douchettes.",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:7,title:"Point 7 : Réception essieux",desc:"Manque indication expéditeur sur réception essieux.\n🔗 Voir le ticket GLPI\nAction : Boucler le ticket si on met lot défaut ou le numéro d'essieu.",addedDate:"2026-11-10",status:"À faire",notes:""},
- {id:8,title:"Point 8 : Matériels PETCOP (Mahe)",desc:"Créer les matériels PETCOP 1, 2, 3, 4.",addedDate:"2026-11-10",status:"À faire",notes:""}
+ {id:1,title:"Point 1 : Info agent & mouvements supports",desc:"Comment retrouver qui a fait des prélèvements et quand ?\n⚠️ Prérequis : Avoir les droits suffisants dans RFX.",addedDate:"2026-11-10",status:"À faire",priority:"moyenne",notes:""},
+ {id:2,title:"Point 2 : Dashboard pilotage caristes",desc:"• Mouvements à faire / faits par jour\n• Visuel nuit complète (présence agent oui/non)\n• Historique > 1 mois\n• Détail synthétisé par agent/support avec ratio",addedDate:"2026-11-10",status:"À faire",priority:"moyenne",notes:""},
+ {id:3,title:"Point 3 : Traitement anomalies (Luc)",desc:"Nettoyage des procédures d'embarquement (actuellement non traitées).\n⚠️ Problème : Si anomalie corrigée, la ligne reste rouge. Comment informer Geoparts pour la passer au vert ?",addedDate:"2026-11-10",status:"À faire",priority:"haute",notes:""},
+ {id:4,title:"Point 4 : Manut RFX & DPX (Resp: Mahe)",desc:"Les DPX créent des manuts sans mettre les palettes au départ (mouvements indus).\n• Piste : Correction auto ? Ajouter date de création du bon manut sur les embarques.\n• Action : Rappeler le geste métier (déplacement physique d'abord, bonne manut ensuite).",addedDate:"2026-11-10",status:"À faire",priority:"haute",notes:""},
+ {id:5,title:"Point 5 : Fluidité MAG2 et St Eloi",desc:"Problème de rétention et envoi 'en masse' qui déstabilise GEOPARTS.\n• Action : QRQC à faire. Suivi amélioration organisation nécessaire.",addedDate:"2026-11-10",status:"À faire",priority:"moyenne",notes:""},
+ {id:6,title:"Point 6 : Commande matériel",desc:"Commande de 3 douchettes.",addedDate:"2026-11-10",status:"À faire",priority:"basse",notes:""},
+ {id:7,title:"Point 7 : Réception essieux",desc:"Manque indication expéditeur sur réception essieux.\n🔗 Voir le ticket GLPI\nAction : Boucler le ticket si on met lot défaut ou le numéro d'essieu.",addedDate:"2026-11-10",status:"À faire",priority:"moyenne",notes:""},
+ {id:8,title:"Point 8 : Matériels PETCOP (Mahe)",desc:"Créer les matériels PETCOP 1, 2, 3, 4.",addedDate:"2026-11-10",status:"À faire",priority:"basse",notes:""}
 ];
 const STATUS = [
  {label:"À faire",key:"todo",badge:"st-todo-badge",card:""},
  {label:"En cours",key:"wip",badge:"st-wip-badge",card:"st-wip"},
  {label:"Terminé",key:"done",badge:"st-done-badge",card:"st-done"}
 ];
+const PRIO = [
+ {key:"haute",label:"Haute"},
+ {key:"moyenne",label:"Moyenne"},
+ {key:"basse",label:"Basse"}
+];
+const PRIO_ORD = {haute:0,moyenne:1,basse:2};
 
 /* ═══════════ ÉTAT ═══════════ */
 let points=[], meetingDate="", theme="chaleureux", autoCorrect=true;
-let editingIndex=null, filterStatus="all", searchQ="", sortBy="date-asc";
+let editingIndex=null, filterStatus="all", priorityFilter="all", searchQ="", sortBy="date-asc";
 let firstRender=true, printMode=false;
 let fb=null, currentUser=null, unsubSnap=null, firstSnap=true;
 let lastLocalAt=0, cloudTimer=null, pendingRemote=null, pendingTimer=null;
@@ -589,6 +637,9 @@ const escAttr=s=>esc(s).replace(/"/g,'&quot;');
 const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 const fmtDate=s=>{if(!s)return'';try{const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});}catch{return s;}};
 const stOf=p=>STATUS.find(s=>s.label===p.status)||STATUS[0];
+const normPrio=v=>PRIO.some(x=>x.key===v)?v:'moyenne';
+const prioOf=p=>PRIO.find(x=>x.key===normPrio(p.priority))||PRIO[1];
+function normalizePoints(arr){arr.forEach(p=>{p.priority=normPrio(p.priority);});return arr;}
 
 /* ═══════════ ICÔNES ═══════════ */
 const IC={
@@ -624,7 +675,7 @@ function loadLocal(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY);
     if(raw){const d=JSON.parse(raw);
-      points=Array.isArray(d.points)&&d.points.length?d.points:structuredClone(DEFAULT_POINTS);
+      points=Array.isArray(d.points)&&d.points.length?normalizePoints(d.points):structuredClone(DEFAULT_POINTS);
       meetingDate=d.meetingDate||todayISO(); lastLocalAt=d.updatedAt||0;
     }else{points=structuredClone(DEFAULT_POINTS);meetingDate=todayISO();}
   }catch{points=structuredClone(DEFAULT_POINTS);meetingDate=todayISO();}
@@ -641,15 +692,39 @@ function saveData(){
   if(fb&&currentUser)queueCloud();
 }
 
+/* ═══════════ PRIORITÉS : helpers ═══════════ */
+function prioSegHTML(id,value){
+  return `<div class="prio-seg" id="${id}" data-value="${value}" role="group" aria-label="Choisir la priorité">`+
+    PRIO.map(x=>`<button type="button" class="prio-opt ${x.key===value?'selected':''}" data-prio="${x.key}" aria-pressed="${x.key===value}"><span class="dot"></span>${x.label}</button>`).join('')+`</div>`;
+}
+function setPrio(container,key){
+  if(!container)return;
+  container.dataset.value=key;
+  container.querySelectorAll('.prio-opt').forEach(b=>{
+    const on=b.dataset.prio===key;
+    b.classList.toggle('selected',on);
+    b.setAttribute('aria-pressed',String(on));
+  });
+}
+function cyclePriority(i){
+  const cur=PRIO.findIndex(x=>x.key===prioOf(points[i]).key);
+  points[i].priority=PRIO[(cur+1)%PRIO.length].key;
+  saveData();render();
+  const b=document.querySelector(`[data-action="prio"][data-index="${i}"]`);
+  if(b){b.classList.add('pulse');b.addEventListener('animationend',()=>b.classList.remove('pulse'),{once:true});}
+}
+
 /* ═══════════ RENDU ═══════════ */
 function counts(){const c={all:points.length,todo:0,wip:0,done:0};points.forEach(p=>c[stOf(p).key]++);return c;}
 function visiblePoints(){
   let list=points.map((p,i)=>({p,i}));
   if(filterStatus!=='all')list=list.filter(x=>stOf(x.p).key===filterStatus);
+  if(priorityFilter!=='all')list=list.filter(x=>prioOf(x.p).key===priorityFilter);
   if(searchQ){const q=searchQ.toLowerCase();list=list.filter(x=>(x.p.title+' '+x.p.desc+' '+(x.p.notes||'')).toLowerCase().includes(q));}
   const ord={todo:0,wip:1,done:2};
   if(sortBy==='date-asc')list.sort((a,b)=>(a.p.addedDate||'').localeCompare(b.p.addedDate||'')||a.p.id-b.p.id);
   if(sortBy==='date-desc')list.sort((a,b)=>(b.p.addedDate||'').localeCompare(a.p.addedDate||'')||b.p.id-a.p.id);
+  if(sortBy==='priority')list.sort((a,b)=>PRIO_ORD[prioOf(a.p).key]-PRIO_ORD[prioOf(b.p).key]||(a.p.addedDate||'').localeCompare(b.p.addedDate||'')||a.p.id-b.p.id);
   if(sortBy==='status')list.sort((a,b)=>ord[stOf(a.p).key]-ord[stOf(b.p).key]||a.p.id-b.p.id);
   if(sortBy==='title')list.sort((a,b)=>a.p.title.localeCompare(b.p.title,'fr'));
   return list;
@@ -667,12 +742,14 @@ function render(){
   const box=$('#pointsContainer');
   if(!list.length){box.innerHTML=`<div class="empty-state">${points.length?'Aucun point ne correspond à ce filtre.':'Aucun point. Cliquez sur « Ajouter un point » pour commencer.'}</div>`;return;}
   box.innerHTML=list.map(({p,i},n)=>{
+    const pr=prioOf(p);
     if(editingIndex===i&&!printMode){
       return `<article class="point-card editing"><div class="edit-header">${IC.pencil}Modification du point</div>
         <div class="form-row">
-          <div class="form-field"><label>Titre du point</label><input type="text" id="editTitle-${i}" spellcheck="true" value="${escAttr(p.title)}"></div>
-          <div class="form-field"><label>Date d'ajout</label><input type="date" id="editDate-${i}" value="${escAttr(p.addedDate||'')}"></div>
+          <div class="form-field" style="margin-bottom:0"><label>Titre du point</label><input type="text" id="editTitle-${i}" spellcheck="true" value="${escAttr(p.title)}"></div>
+          <div class="form-field" style="margin-bottom:0"><label>Date d'ajout</label><input type="date" id="editDate-${i}" value="${escAttr(p.addedDate||'')}"></div>
         </div>
+        <div class="form-field"><label>Priorité</label>${prioSegHTML('editPrio-'+i,pr.key)}</div>
         <div class="form-field"><label>Description / Contexte</label>
           <div class="notes-wrapper" style="margin-top:0">
             <textarea id="editDesc-${i}" class="notes" spellcheck="true">${esc(p.desc||'')}</textarea>
@@ -690,7 +767,9 @@ function render(){
     return `<article class="point-card ${st.card} ${firstRender&&!printMode?'enter':''}" style="--i:${n}">
       <div class="point-head">
         <div class="point-meta"><h3 class="point-title">${esc(p.title)}</h3>
-          <div class="point-date">${IC.cal}Ajouté le ${fmtDate(p.addedDate)}</div></div>
+          <div class="point-date">${IC.cal}Ajouté le ${fmtDate(p.addedDate)}
+            <button class="prio-badge prio-${pr.key}" data-action="prio" data-index="${i}" type="button" title="Priorité ${pr.label} — cliquer pour changer"><span class="dot"></span>${pr.label}</button>
+          </div></div>
         <div class="point-actions">
           <button class="status-badge ${st.badge}" data-action="status" data-index="${i}" type="button" title="Cliquer pour changer le statut"><span class="dot"></span>${st.label}</button>
           <button class="btn-icon" data-action="edit" data-index="${i}" type="button" title="Modifier ce point" aria-label="Modifier">${IC.pencil}</button>
@@ -721,8 +800,10 @@ function startEdit(i){editingIndex=i;render();const el=$(`#editTitle-${i}`);if(e
 function cancelEdit(){editingIndex=null;render();}
 function saveEdit(i){
   const t=$(`#editTitle-${i}`).value.trim(),d=$(`#editDesc-${i}`).value.trim(),dt=$(`#editDate-${i}`).value;
+  const pr=$(`#editPrio-${i}`)?.dataset.value;
   if(!t){toast('Le titre ne peut pas être vide.',{type:'err'});return;}
   points[i].title=t;points[i].desc=d;if(dt)points[i].addedDate=dt;
+  points[i].priority=normPrio(pr);
   editingIndex=null;saveData();render();toast('Point modifié.');
 }
 function deletePoint(i){
@@ -731,11 +812,12 @@ function deletePoint(i){
 }
 function addPoint(){
   const t=$('#newTitle').value.trim(),d=$('#newDesc').value.trim(),dt=$('#newDate').value;
+  const pr=normPrio($('#newPrio').dataset.value);
   if(!t){toast('Veuillez saisir un titre.',{type:'err'});$('#newTitle').focus();return;}
   const id=points.length?Math.max(...points.map(p=>p.id))+1:1;
-  points.push({id,title:t,desc:d,addedDate:dt||todayISO(),status:'À faire',notes:''});
-  $('#newTitle').value='';$('#newDesc').value='';$('#addForm').hidden=true;
-  filterStatus='all';searchQ='';$('#searchInput').value='';
+  points.push({id,title:t,desc:d,addedDate:dt||todayISO(),status:'À faire',priority:pr,notes:''});
+  $('#newTitle').value='';$('#newDesc').value='';setPrio($('#newPrio'),'moyenne');$('#addForm').hidden=true;
+  filterStatus='all';priorityFilter='all';$('#prioFilter').value='all';searchQ='';$('#searchInput').value='';
   saveData();render();toast('Point ajouté.');
   setTimeout(()=>{const cards=document.querySelectorAll('.point-card');cards[cards.length-1]?.scrollIntoView({behavior:'smooth',block:'center'});},80);
 }
@@ -853,7 +935,7 @@ function schedulePending(){clearTimeout(pendingTimer);pendingTimer=setTimeout(()
 },1400);}
 function applyRemote(d,force){
   if(!force&&(d.updatedAt||0)<=lastLocalAt)return;
-  points=Array.isArray(d.points)?d.points:structuredClone(DEFAULT_POINTS);
+  points=Array.isArray(d.points)?normalizePoints(d.points):structuredClone(DEFAULT_POINTS);
   meetingDate=d.meetingDate||meetingDate||todayISO();
   if(d.theme)theme=d.theme;
   if(typeof d.autoCorrect==='boolean')autoCorrect=d.autoCorrect;
@@ -968,10 +1050,13 @@ function applyTheme(t){theme=t;document.body.dataset.theme=t;$('#themeSelect').v
 /* ═══════════ LIAISONS UI ═══════════ */
 function bind(){
   $('#pointsContainer').addEventListener('click',e=>{
+    const po=e.target.closest('.prio-opt');
+    if(po){setPrio(po.closest('.prio-seg'),po.dataset.prio);return;}
     const el=e.target.closest('[data-action]');if(!el)return;
     const i=+el.dataset.index;
     switch(el.dataset.action){
       case 'status':toggleStatus(i);break;
+      case 'prio':cyclePriority(i);break;
       case 'edit':startEdit(i);break;
       case 'delete':deletePoint(i);break;
       case 'save-edit':saveEdit(i);break;
@@ -987,7 +1072,9 @@ function bind(){
   $('#chips').addEventListener('click',e=>{const c=e.target.closest('[data-filter]');if(!c)return;
     filterStatus=c.dataset.filter;editingIndex=null;render();});
   $('#searchInput').addEventListener('input',e=>{searchQ=e.target.value;editingIndex=null;render();});
+  $('#prioFilter').addEventListener('change',e=>{priorityFilter=e.target.value;editingIndex=null;render();});
   $('#sortSelect').addEventListener('change',e=>{sortBy=e.target.value;editingIndex=null;render();});
+  $('#newPrio').addEventListener('click',e=>{const b=e.target.closest('.prio-opt');if(b)setPrio($('#newPrio'),b.dataset.prio);});
   $('#addToggle').addEventListener('click',()=>{const f=$('#addForm');f.hidden=!f.hidden;
     if(!f.hidden){$('#newDate').value=todayISO();$('#newTitle').focus();}});
   $('#addCancel').addEventListener('click',()=>$('#addForm').hidden=true);
