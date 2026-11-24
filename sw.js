@@ -2,7 +2,7 @@
    sw.js  ·  v8 — app shell hors ligne, SDK Firebase en cache,
    APIs d'authentification / Firestore jamais mises en cache.
    ═══════════════════════════════════════════════════════════════ */
-const VERSION = '8';
+const VERSION = '9';
 const BASE = new URL('./', self.location);
 const SHELL = 'shell-v' + VERSION;
 const ASSETS = 'assets-v' + VERSION;
