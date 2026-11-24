@@ -15,17 +15,43 @@
   "categories": ["business", "productivity", "utilities"],
   "prefer_related_applications": false,
   "icons": [
-    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icons/maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    {
+      "src": "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%23a8410f'/%3E%3Cstop%20offset='.5'%20stop-color='%23c96a1a'/%3E%3Cstop%20offset='1'%20stop-color='%23e8b34a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='512'%20height='512'%20rx='115'%20fill='url(%23g)'/%3E%3Cg%20fill='%23fff8ef'%3E%3Crect%20x='77'%20y='130'%20width='358'%20height='43'%20rx='21.5'/%3E%3Crect%20x='77'%20y='220'%20width='358'%20height='43'%20rx='21.5'/%3E%3Crect%20x='77'%20y='310'%20width='215'%20height='43'%20rx='21.5'/%3E%3Ccircle%20cx='367'%20cy='331.5'%20r='28.4'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%23a8410f'/%3E%3Cstop%20offset='.5'%20stop-color='%23c96a1a'/%3E%3Cstop%20offset='1'%20stop-color='%23e8b34a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='512'%20height='512'%20fill='url(%23g)'/%3E%3Cg%20fill='%23fff8ef'%3E%3Crect%20x='108'%20y='150'%20width='296'%20height='35'%20rx='17.5'/%3E%3Crect%20x='108'%20y='223'%20width='296'%20height='35'%20rx='17.5'/%3E%3Crect%20x='108'%20y='296'%20width='178'%20height='35'%20rx='17.5'/%3E%3Ccircle%20cx='348'%20cy='313.5'%20r='23.4'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Nouveau point", "short_name": "Nouveau", "description": "Ajouter un point à l’ordre du jour", "url": "./?action=new", "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }] },
-    { "name": "Points urgents", "short_name": "Urgences", "description": "Priorité haute en tête", "url": "./?view=urgent", "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }] },
-    { "name": "Vue Tableau", "short_name": "Tableau", "description": "Kanban par statut", "url": "./?view=board", "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }] }
+    {
+      "name": "Nouveau point",
+      "short_name": "Nouveau",
+      "description": "Ajouter un point à l’ordre du jour",
+      "url": "./?action=new"
+    },
+    {
+      "name": "Points urgents",
+      "short_name": "Urgences",
+      "description": "Priorité haute en tête",
+      "url": "./?view=urgent"
+    },
+    {
+      "name": "Vue Tableau",
+      "short_name": "Tableau",
+      "description": "Kanban par statut",
+      "url": "./?view=board"
+    }
   ],
   "share_target": {
     "action": "./?share=1",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": { "title": "title", "text": "text", "url": "url" }
   },
   "launch_handler": { "client_mode": ["navigate-existing", "auto"] }
