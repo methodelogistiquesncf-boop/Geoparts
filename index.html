@@ -1,16 +1,11 @@
 <!-- ═══════════════════════════════════════════════════════════════
-     index.html  ·  Suivi Réunion Prestataire — version finale
-     Dépôt GitHub Pages : index.html · styles.css · themes.js · app.js
-
-     IMPORTANT APRÈS MISE À JOUR :
-     Poussez les 4 fichiers ENSEMBLE, puis faites Ctrl+F5.
-     Un écran vide venait d'un app.js encore en cache navigateur qui
-     cherchait des éléments supprimés du HTML : le bind() plantait
-     avant le rendu. Cette version lie les événements de façon
-     tolérante, affiche une bannière explicite en cas de pépin, et
-     force le rechargement des modules via ?v=6.
-     Vos données ne sont pas perdues : elles sont dans Firestore,
-     sous users/{uid}, et reviennent dès la connexion.
+     index.html  ·  Suivi Réunion Prestataire — PWA
+     Dépôt GitHub Pages (poussez TOUS les fichiers ensemble, puis Ctrl+F5) :
+       index.html · styles.css · themes.js · app.js · pwa.js
+       sw.js · manifest.webmanifest · offline.html
+       icons/icon.svg · icons/maskable.svg
+     Les PNG d'icônes (192/512/maskable/apple) sont générés au démarrage
+     par pwa.js : aucun binaire à versionner, installation valide partout.
      ═══════════════════════════════════════════════════════════════ -->
 <!DOCTYPE html>
 <html lang="fr" data-theme="chaleureux" data-density="confort">
@@ -19,11 +14,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Suivi Réunion Prestataire — Geoparts</title>
+<meta name="description" content="Ordre du jour, priorités, notes et discussions datées pour le suivi bimensuel du prestataire. Synchronisé, installable, utilisable hors ligne.">
+<meta name="application-name" content="Réunion Geoparts">
+<meta name="theme-color" content="#fffdf8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Réunion">
+<meta name="msapplication-TileColor" content="#bc5215">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="mask-icon" href="./icons/icon.svg" color="#bc5215">
+<link rel="apple-touch-icon" href="./icons/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css?v=6">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%23bc5215'/%3E%3Cpath d='M11 14h18M11 20h18M11 26h11' stroke='%23fff8ef' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='28.5' cy='26' r='3.6' fill='%23fff8ef'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./styles.css?v=7">
 </head>
 <body>
 <noscript><p class="noscript">Cette application nécessite JavaScript.</p></noscript>
@@ -41,11 +47,11 @@
     <aside class="auth-brand">
       <svg width="46" height="46" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.45)"/><path d="M11 14h18M11 20h18M11 26h11" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="28.5" cy="26" r="3.6" fill="#fff"/></svg>
       <h1 class="auth-title">Suivi Réunion<br>Prestataire</h1>
-      <p class="auth-tag">Ordre du jour, priorités, notes et discussions datées — synchronisés sur tous vos postes.</p>
+      <p class="auth-tag">Ordre du jour, priorités, notes et discussions datées — installable, synchronisé, utilisable hors ligne.</p>
       <div class="auth-feats">
         <div><svg class="ic" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .4-9A6 6 0 0 0 6.2 8.5 4.5 4.5 0 0 0 6.5 19z"/><path d="m9 13 2 2 4-4"/></svg>Synchronisation Firebase temps réel</div>
         <div><svg class="ic" viewBox="0 0 24 24"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/><path d="M8 8.5h8M8 12h5"/></svg>Commentaires datés par point</div>
-        <div><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4.5"/></svg>Accès réservé aux comptes autorisés</div>
+        <div><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Installable · fonctionne hors ligne</div>
       </div>
       <div class="auth-mock" aria-hidden="true">
         <div class="mock-card"><span class="mock-dot" style="background:#ffd98a"></span>Dashboard caristes<span style="margin-left:auto;opacity:.85">En cours</span></div>
@@ -69,6 +75,8 @@
         <button class="btn btn-primary auth-submit" id="loginBtn" type="submit">Se connecter</button>
         <button class="btn btn-ghost auth-submit" id="authRetry" type="button" hidden>Réessayer la connexion</button>
         <div class="auth-links"><button type="button" class="link-btn" id="toReset">Mot de passe oublié ?</button><span></span></div>
+        <button class="btn btn-ghost auth-submit btn-install" id="installBtnAuth" type="button" hidden>
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Installer l’application</button>
       </form>
 
       <form id="resetForm" hidden novalidate>
@@ -99,12 +107,13 @@
       <div class="brand">
         <svg width="36" height="36" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent2)"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#lgB)"/><path d="M11 14h18M11 20h18M11 26h11" stroke="var(--on-accent)" stroke-width="3.2" stroke-linecap="round"/><circle cx="28.5" cy="26" r="3.6" fill="var(--on-accent)"/></svg>
         <div class="brand-txt">
-          <div class="brand-name">Suivi Réunion Prestataire</div>
+          <div class="brand-name">Suivi Réunion Prestataire <span class="app-badge" id="appBadge" hidden>App</span></div>
           <div class="brand-sub">Ordre du jour, priorités &amp; suivi des actions</div>
           <div class="print-only" id="printDate"></div>
         </div>
       </div>
       <div class="top-actions">
+        <span class="offline-pill" id="offlinePill" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .4-9A6 6 0 0 0 6.2 8.5 4.5 4.5 0 0 0 6.5 19z"/><path d="m4 4 16 16"/></svg>Hors ligne</span>
         <label class="field-inline" title="Date de la réunion"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><input type="date" id="meetingDate"></label>
         <div class="view-switch" id="viewSwitch" role="group" aria-label="Mode d'affichage">
           <button type="button" data-view="list" class="vs-btn" title="Vue Liste (1)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Liste</span></button>
@@ -113,6 +122,7 @@
         </div>
         <button class="btn-icon" id="railToggle" type="button" title="Afficher la synthèse" aria-label="Afficher la synthèse"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
         <button class="btn-icon" id="appearanceBtn" type="button" title="Apparence & thèmes" aria-label="Apparence"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3.5 9h17M3.5 15h17"/></svg></button>
+        <button class="btn btn-ghost btn-install" id="installBtn" type="button" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg><span>Installer</span></button>
         <button class="btn btn-ghost btn-news" id="newsBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg><span>Nouveautés</span></button>
         <button class="btn-icon" id="printBtn" type="button" title="Imprimer / PDF" aria-label="Imprimer"><svg class="ic" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-3"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg></button>
         <div class="account" id="accountArea"></div>
@@ -167,6 +177,25 @@
         <div class="prio-bars" id="prioBars"></div>
         <div class="rail-cmt" id="railCmt"></div>
       </section>
+
+      <section class="panel" id="pwaPanel">
+        <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3"/></svg>Application</h4>
+        <div class="pwa-state" id="pwaState"></div>
+        <button class="btn btn-primary btn-block btn-sm" id="pwaInstall" type="button" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Installer sur cet appareil</button>
+        <div class="pwa-rows">
+          <div class="pwa-row"><span>Mode hors ligne</span><b id="pwaOffline">…</b></div>
+          <div class="pwa-row"><span>Version du cache</span><b id="pwaVersion">…</b></div>
+          <div class="pwa-row"><span>Stockage local</span><b id="pwaStorage">…</b></div>
+        </div>
+        <div class="meter" title="Occupation du stockage autorisé"><i id="pwaMeter"></i></div>
+        <label class="toggle-pill toggle-block" title="Affiche le nombre de points à faire sur l'icône de l'application"><input type="checkbox" id="pwaBadge" checked>Badge sur l’icône</label>
+        <div class="btn-grid pwa-btns">
+          <button class="btn btn-ghost btn-sm" id="pwaUpdate" type="button">Mises à jour</button>
+          <button class="btn btn-ghost btn-sm" id="pwaPersist" type="button">Stockage durable</button>
+          <button class="btn btn-ghost btn-sm btn-wide" id="pwaClear" type="button">Vider le cache &amp; recharger</button>
+        </div>
+      </section>
+
       <section class="panel">
         <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>Vues enregistrées</h4>
         <div class="saved-views" id="savedViews"></div>
@@ -226,7 +255,7 @@
 <div class="modal-overlay" id="appearanceModal" hidden role="dialog" aria-modal="true" aria-label="Apparence">
   <div class="modal">
     <h2><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3.5 9h17M3.5 15h17"/></svg>Apparence</h2>
-    <p class="sub">Le moteur de thèmes vit dans <code>themes.js</code> — ajoutez-y vos propres palettes.</p>
+    <p class="sub">Le moteur de thèmes vit dans <code>themes.js</code>. La couleur de barre système suit le thème choisi.</p>
     <div class="theme-grid" id="themeGrid"></div>
     <div class="appear-row"><label class="appear-label">Accent personnalisé</label>
       <div class="accent-row"><input type="color" id="accentPick" value="#bc5215" aria-label="Couleur d'accent"><button class="btn btn-ghost btn-sm" id="accentReset" type="button">Réinitialiser</button><span class="accent-hint" id="accentHint">Accent du thème</span></div></div>
@@ -242,11 +271,25 @@
   </div>
 </div>
 
+<!-- ══════════ MODALE iOS ══════════ -->
+<div class="modal-overlay" id="iosModal" hidden role="dialog" aria-modal="true" aria-label="Installation iOS">
+  <div class="modal">
+    <h2><svg class="ic" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3"/></svg>Installer sur iPhone / iPad</h2>
+    <p class="sub">Safari n’affiche pas de bouton d’installation automatique : trois gestes suffisent.</p>
+    <ol class="ios-steps">
+      <li><span class="ios-n">1</span><span>Touchez le bouton <b>Partager</b> <svg class="ios-share" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/></svg> dans la barre de Safari.</span></li>
+      <li><span class="ios-n">2</span><span>Choisissez <b>Sur l’écran d’accueil</b>.</span></li>
+      <li><span class="ios-n">3</span><span>Validez avec <b>Ajouter</b>. L’application s’ouvre en plein écran, avec son icône et le suivi hors ligne.</span></li>
+    </ol>
+    <div class="form-actions"><button class="btn btn-primary" id="iosClose" type="button">Compris</button></div>
+  </div>
+</div>
+
 <!-- ══════════ MODALE NOUVEAUTÉS ══════════ -->
 <div class="modal-overlay" id="newsModal" hidden role="dialog" aria-modal="true" aria-label="Nouveautés">
   <div class="modal modal-wide">
     <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Ce qui change &amp; ce qu'on peut encore faire</h2>
-    <p class="sub">Version finale : discussions datées, accès verrouillé, large écran et responsive.</p>
+    <p class="sub">Version PWA : installable, hors ligne, discussions datées, large écran et responsive.</p>
     <div class="news-cols">
       <div><h5 class="news-h ok">Livré dans cette version</h5><ul class="news-list" id="newsDone"></ul></div>
       <div><h5 class="news-h info">Pistes pour la suite</h5><ul class="news-list" id="newsNext"></ul></div>
@@ -256,6 +299,6 @@
 </div>
 
 <div class="toast-host" id="toastHost" aria-live="polite"></div>
-<script type="module" src="./app.js?v=6"></script>
+<script type="module" src="./app.js?v=7"></script>
 </body>
 </html>
