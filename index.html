@@ -1,8 +1,16 @@
 <!-- ═══════════════════════════════════════════════════════════════
-     index.html  ·  Suivi Réunion Prestataire
+     index.html  ·  Suivi Réunion Prestataire — version finale
      Dépôt GitHub Pages : index.html · styles.css · themes.js · app.js
-     Accès : connexion uniquement. Comptes créés par l'administrateur
-     dans Firebase Console → Authentication → Users → Add user.
+
+     IMPORTANT APRÈS MISE À JOUR :
+     Poussez les 4 fichiers ENSEMBLE, puis faites Ctrl+F5.
+     Un écran vide venait d'un app.js encore en cache navigateur qui
+     cherchait des éléments supprimés du HTML : le bind() plantait
+     avant le rendu. Cette version lie les événements de façon
+     tolérante, affiche une bannière explicite en cas de pépin, et
+     force le rechargement des modules via ?v=6.
+     Vos données ne sont pas perdues : elles sont dans Firestore,
+     sous users/{uid}, et reviennent dès la connexion.
      ═══════════════════════════════════════════════════════════════ -->
 <!DOCTYPE html>
 <html lang="fr" data-theme="chaleureux" data-density="confort">
@@ -14,12 +22,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./styles.css?v=6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%23bc5215'/%3E%3Cpath d='M11 14h18M11 20h18M11 26h11' stroke='%23fff8ef' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='28.5' cy='26' r='3.6' fill='%23fff8ef'/%3E%3C/svg%3E">
 </head>
 <body>
 <noscript><p class="noscript">Cette application nécessite JavaScript.</p></noscript>
 <div class="bg-glow" aria-hidden="true"></div><div class="bg-grain" aria-hidden="true"></div>
+
+<div class="boot-error" id="bootError" hidden role="alert">
+  <svg class="ic" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19z"/><path d="M12 9.5v4.5M12 17.2v.3"/></svg>
+  <span id="bootErrorMsg"></span>
+  <button class="btn btn-sm btn-danger-solid" id="bootReload" type="button">Recharger sans cache</button>
+</div>
 
 <!-- ══════════ CONNEXION ══════════ -->
 <div class="auth-overlay" id="authOverlay" hidden role="dialog" aria-modal="true" aria-label="Connexion">
@@ -27,16 +41,16 @@
     <aside class="auth-brand">
       <svg width="46" height="46" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.45)"/><path d="M11 14h18M11 20h18M11 26h11" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="28.5" cy="26" r="3.6" fill="#fff"/></svg>
       <h1 class="auth-title">Suivi Réunion<br>Prestataire</h1>
-      <p class="auth-tag">Ordre du jour, priorités, notes et actions — synchronisés sur tous vos postes.</p>
+      <p class="auth-tag">Ordre du jour, priorités, notes et discussions datées — synchronisés sur tous vos postes.</p>
       <div class="auth-feats">
         <div><svg class="ic" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .4-9A6 6 0 0 0 6.2 8.5 4.5 4.5 0 0 0 6.5 19z"/><path d="m9 13 2 2 4-4"/></svg>Synchronisation Firebase temps réel</div>
-        <div><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>Vues Liste, Tableau et Compacte</div>
+        <div><svg class="ic" viewBox="0 0 24 24"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/><path d="M8 8.5h8M8 12h5"/></svg>Commentaires datés par point</div>
         <div><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4.5"/></svg>Accès réservé aux comptes autorisés</div>
       </div>
       <div class="auth-mock" aria-hidden="true">
         <div class="mock-card"><span class="mock-dot" style="background:#ffd98a"></span>Dashboard caristes<span style="margin-left:auto;opacity:.85">En cours</span></div>
         <div class="mock-card"><span class="mock-dot" style="background:#b9f0c0"></span>Commande douchettes<span style="margin-left:auto;opacity:.85">Terminé</span></div>
-        <div class="mock-card"><span class="mock-dot" style="background:#ffc4b3"></span>Anomalies embarques<span style="margin-left:auto;opacity:.85">Haute</span></div>
+        <div class="mock-card"><span class="mock-dot" style="background:#ffc4b3"></span>Anomalies embarques<span style="margin-left:auto;opacity:.85">3 commentaires</span></div>
       </div>
     </aside>
     <section class="auth-panel">
@@ -110,13 +124,13 @@
     <main class="main-col">
       <div class="toolbar">
         <div class="search-box"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
-          <input type="search" id="searchInput" placeholder="Rechercher un point, une note…  ( / )" aria-label="Rechercher">
+          <input type="search" id="searchInput" placeholder="Rechercher un point, une note, un commentaire…  ( / )" aria-label="Rechercher">
           <kbd class="kbd">/</kbd></div>
         <div class="chips" id="chips" role="group" aria-label="Filtrer par statut"></div>
         <label class="sort-box" title="Filtrer par priorité"><svg class="ic" viewBox="0 0 24 24"><path d="M5 21V4m0 0h12l-3 4 3 4H5"/></svg>
           <select id="prioFilter" aria-label="Filtrer par priorité"><option value="all">Toutes priorités</option><option value="haute">Haute</option><option value="moyenne">Moyenne</option><option value="basse">Basse</option></select></label>
         <label class="sort-box" title="Trier"><svg class="ic" viewBox="0 0 24 24"><path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/></svg>
-          <select id="sortSelect" aria-label="Trier"><option value="manual">Ordre manuel</option><option value="priority">Priorité</option><option value="date-asc">Date ↑</option><option value="date-desc">Date ↓</option><option value="status">Statut</option><option value="title">Titre A→Z</option></select></label>
+          <select id="sortSelect" aria-label="Trier"><option value="manual">Ordre manuel</option><option value="priority">Priorité</option><option value="date-asc">Date ↑</option><option value="date-desc">Date ↓</option><option value="status">Statut</option><option value="comments">Discussion</option><option value="title">Titre A→Z</option></select></label>
         <button class="btn btn-primary" id="addToggle" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter un point</button>
       </div>
 
@@ -151,6 +165,7 @@
         <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Synthèse</h4>
         <div class="donut-row"><div class="donut-wrap" id="donutWrap"></div><div class="legend" id="legend"></div></div>
         <div class="prio-bars" id="prioBars"></div>
+        <div class="rail-cmt" id="railCmt"></div>
       </section>
       <section class="panel">
         <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>Vues enregistrées</h4>
@@ -174,7 +189,7 @@
       </section>
       <section class="panel panel-keys">
         <h4 class="panel-title"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>Raccourcis</h4>
-        <ul class="keys"><li><kbd>N</kbd>Nouveau point</li><li><kbd>/</kbd>Rechercher</li><li><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>Changer de vue</li><li><kbd>Échap</kbd>Fermer / annuler</li></ul>
+        <ul class="keys"><li><kbd>N</kbd>Nouveau point</li><li><kbd>/</kbd>Rechercher</li><li><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>Changer de vue</li><li><kbd>Ctrl</kbd>+<kbd>↵</kbd>Publier un commentaire</li><li><kbd>Échap</kbd>Fermer / annuler</li></ul>
       </section>
     </aside>
   </div>
@@ -186,7 +201,8 @@
   <header class="drawer-head">
     <div class="drawer-nav"><button class="btn-icon" id="drawerPrev" type="button" title="Point précédent" aria-label="Point précédent"><svg class="ic" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
       <button class="btn-icon" id="drawerNext" type="button" title="Point suivant" aria-label="Point suivant"><svg class="ic" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></svg></button>
-      <span class="drawer-pos" id="drawerPos"></span></div>
+      <span class="drawer-pos" id="drawerPos"></span>
+      <span class="drawer-cmt" id="drawerCmt"></span></div>
     <button class="btn-icon" id="drawerClose" type="button" title="Fermer" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </header>
   <div class="drawer-body" id="drawerBody"></div>
@@ -230,7 +246,7 @@
 <div class="modal-overlay" id="newsModal" hidden role="dialog" aria-modal="true" aria-label="Nouveautés">
   <div class="modal modal-wide">
     <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Ce qui change &amp; ce qu'on peut encore faire</h2>
-    <p class="sub">Accès verrouillé, mise en page large écran, responsive et modulaire.</p>
+    <p class="sub">Version finale : discussions datées, accès verrouillé, large écran et responsive.</p>
     <div class="news-cols">
       <div><h5 class="news-h ok">Livré dans cette version</h5><ul class="news-list" id="newsDone"></ul></div>
       <div><h5 class="news-h info">Pistes pour la suite</h5><ul class="news-list" id="newsNext"></ul></div>
@@ -240,6 +256,6 @@
 </div>
 
 <div class="toast-host" id="toastHost" aria-live="polite"></div>
-<script type="module" src="./app.js"></script>
+<script type="module" src="./app.js?v=6"></script>
 </body>
 </html>
