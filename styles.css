@@ -1,18 +1,31 @@
 /* ═══════════════════════════════════════════════════════════════
-   styles.css  ·  Design system, PWA, large écran & responsive
-   Les couleurs sont injectées par themes.js (variables CSS).
+   styles.css  ·  v8 — palette de secours complète sur :root.
+   Même si themes.js ne se charge pas, l'app reste lisible.
    ═══════════════════════════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 :root{
-  --rail-w:340px; --card-pad:1.15rem; --gap:.85rem; --r:15px; --r-sm:10px;
-  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
-  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  /* ── Palette par défaut (secours) ── */
+  --bg:#f6ecdf; --bg2:#efe0cc; --surface:#fffdf8; --surface2:#f7efe2;
+  --ink:#2e2013; --soft:#6d5638; --muted:#a1876a; --border:#e5d2b8;
+  --accent:#bc5215; --accent2:#e0a437; --on-accent:#fff8ef;
+  --ok:#3d7a34; --ok-bg:#e2efd9; --ok-bd:#b9d8a8;
+  --warn:#a06a08; --warn-bg:#fbeecb; --warn-bd:#ecd28a;
+  --danger:#b3362b; --danger-bg:#f9e2dd; --danger-bd:#eab5ac;
+  --info:#2b6f8f; --info-bg:#e0edf3; --info-bd:#b3d2df;
+  --todo:#7a5a34; --todo-bg:#f3e8d6; --todo-bd:#ddc49c;
+  --glow-a:rgba(188,82,21,.20); --glow-b:rgba(224,164,55,.22); --glow-c:rgba(122,116,60,.14);
+  --shadow:0 2px 10px rgba(96,58,20,.09); --shadow-lg:0 14px 34px rgba(96,58,20,.16);
+  --grain:.05; --scrim:rgba(46,32,19,.42);
+  /* ── Dérivés ── */
   --accent-soft:color-mix(in srgb,var(--accent) 13%,var(--surface));
   --accent-line:color-mix(in srgb,var(--accent) 34%,var(--border));
   --glow1:color-mix(in srgb,var(--accent) 22%,transparent);
   --glow2:color-mix(in srgb,var(--accent2) 20%,transparent);
   --focus:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent);
+  --rail-w:340px; --card-pad:1.15rem; --gap:.85rem; --r:15px; --r-sm:10px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
 }
 [data-density="compact"]{--card-pad:.78rem;--gap:.55rem;--r:12px;--r-sm:8px}
 html{scroll-behavior:smooth;font-size:16px;-webkit-text-size-adjust:100%}
@@ -33,16 +46,16 @@ svg.ic{width:1.05rem;height:1.05rem;flex:none;stroke:currentColor;fill:none;stro
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
 ::-webkit-scrollbar-corner{background:transparent}
 
-.bg-glow{position:fixed;inset:-22%;z-index:-2;pointer-events:none;background:radial-gradient(38% 34% at 16% 10%,var(--glowA),transparent 70%),radial-gradient(34% 30% at 86% 18%,var(--glowB),transparent 70%),radial-gradient(42% 38% at 58% 94%,var(--glowC),transparent 70%);animation:drift 48s ease-in-out infinite alternate}
+.bg-glow{position:fixed;inset:-22%;z-index:-2;pointer-events:none;background:radial-gradient(38% 34% at 16% 10%,var(--glow-a),transparent 70%),radial-gradient(34% 30% at 86% 18%,var(--glow-b),transparent 70%),radial-gradient(42% 38% at 58% 94%,var(--glow-c),transparent 70%);animation:drift 48s ease-in-out infinite alternate}
 @keyframes drift{from{transform:translate(0,0) rotate(0)}to{transform:translate(3%,2%) rotate(2deg)}}
-.bg-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:var(--grain);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.bg-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:var(--grain,.05);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 [data-motion="off"] .bg-glow{animation:none}
 [data-motion="off"] *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 [data-contrast="high"]{--border:color-mix(in srgb,var(--ink) 42%,var(--surface));--muted:var(--soft);--soft:var(--ink)}
 [data-contrast="high"] .pt-card,[data-contrast="high"] .panel{border-width:2px}
 
-.boot-error{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;
-  background:var(--danger-bg);color:var(--danger);border-bottom:2px solid var(--danger-bd);padding:calc(.7rem + var(--sat)) 1rem .7rem;font:600 .82rem 'Inter',sans-serif;box-shadow:var(--shadow)}
+.boot-error{position:relative;z-index:70;display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;
+  background:var(--danger-bg);color:var(--danger);border-bottom:2px solid var(--danger-bd);padding:calc(.7rem + var(--sat)) 1rem .7rem;font:600 .82rem 'Inter',sans-serif}
 .boot-error svg{width:1.1rem;height:1.1rem}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.58rem 1rem;border:1px solid transparent;border-radius:var(--r-sm);font:600 .875rem 'Inter',sans-serif;cursor:pointer;white-space:nowrap;transition:transform .16s,box-shadow .18s,background .18s,color .18s;-webkit-tap-highlight-color:transparent}
@@ -147,6 +160,18 @@ body.rail-open .rail{display:flex;order:-1}
 .rail-cmt svg{width:1rem;height:1rem;color:var(--info)}
 .rail-cmt b{color:var(--ink)}
 .rail-cmt .last{margin-left:auto;font-size:.68rem;color:var(--muted);font-style:italic}
+
+/* ── Diagnostic ── */
+.diag{list-style:none;display:flex;flex-direction:column;gap:.45rem;margin-bottom:.7rem}
+.dg{display:grid;grid-template-columns:.55rem 1fr;gap:.5rem;align-items:start;font-size:.75rem;line-height:1.35}
+.dg-dot{width:.5rem;height:.5rem;border-radius:50%;margin-top:.35rem;background:var(--muted)}
+.dg.ok .dg-dot{background:var(--ok);box-shadow:0 0 0 3px var(--ok-bg)}
+.dg.warn .dg-dot{background:var(--warn);box-shadow:0 0 0 3px var(--warn-bg)}
+.dg.err .dg-dot{background:var(--danger);box-shadow:0 0 0 3px var(--danger-bg)}
+.dg-l{display:block;font-weight:700;color:var(--ink)}
+.dg-d{display:block;color:var(--muted);font-size:.71rem}
+.dg.err .dg-d{color:var(--danger)}
+.dg.warn .dg-d{color:var(--warn)}
 
 /* ── Panneau PWA ── */
 .pwa-state{display:flex;align-items:center;gap:.45rem;font:600 .78rem 'Inter',sans-serif;padding:.45rem .65rem;border-radius:var(--r-sm);margin-bottom:.6rem;border:1px solid var(--border);background:var(--surface2);color:var(--soft)}
