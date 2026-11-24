@@ -1,8 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    app.js  ·  Logique applicative, Firebase, vues & interactions
+   Aucune inscription : les comptes sont créés dans Firebase Console
+   (Authentication → Users → Add user) et l'option « Enable create
+   (sign-up) » doit y être décochée.
    ═══════════════════════════════════════════════════════════════ */
 import { THEMES, DEFAULT_PREFS, themeList, getTheme, applyTheme, applyAccent,
-         applyDensity, applyFontScale, applyMotion, applyContrast, applyAllPrefs } from './themes.js';
+         applyFontScale, applyAllPrefs } from './themes.js';
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC74VWRr6EQSkQN-DB6IOkvH7ezhllPwiE",
@@ -12,6 +15,10 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "173072052005",
   appId: "1:173072052005:web:f9fde39b725fbe03b0b4cc"
 };
+/* Renseignez l'email de l'administrateur pour transformer la demande
+   d'accès en lien mailto pré-rempli. Vide : la demande est copiée. */
+const ADMIN_CONTACT = '';
+
 const FB_BASE = 'https://www.gstatic.com/firebasejs/10.12.2/';
 const GLPI = 'https://mikefri.github.io/Ticket_GLPI/ticket-detail.html?id=dReeI9UA5p6FffQvJVtX';
 const K = { V5:'reunionPrestataireV5', V4:'reunionPrestataireV4', CFG:'reunionFirebaseConfig', OVR:'reunionLocalOverride', NEWS:'reunionNewsSeen' };
@@ -43,6 +50,7 @@ const SEED_VIEWS = [
   { id:'v3', name:'Soldés', view:'compact', status:'done', prio:'all', q:'', sort:'date-desc' }
 ];
 const NEWS_DONE = [
+  ['Accès verrouillé','aucune création de compte depuis le site : seuls les identifiants créés par l’administrateur dans Firebase permettent de se connecter.'],
   ['Mise en page large écran','le contenu occupe jusqu’à 1800 px : deux colonnes de cartes au-delà de 1560 px, rail de synthèse collant à droite.'],
   ['Trois vues réelles','Liste (détail + notes), Tableau kanban par statut, Compacte (tableau dense pour balayer 30 points).'],
   ['Glisser-déposer','réordonnez les cartes à la poignée, ou déposez-les dans une colonne du Tableau pour changer le statut.'],
@@ -64,7 +72,7 @@ const NEWS_NEXT = [
   ['Partage lecture seule','un lien public en lecture pour le prestataire, sans lui donner d’accès en écriture.'],
   ['Commentaires datés','fil de discussion par point plutôt qu’une note unique, pour tracer les échanges.'],
   ['Vélocité','comparer le nombre de points soldés d’une réunion à l’autre et suivre la tendance.'],
-  ['Export PDF mis en page','compte rendu avec en-tête, date, participants et signature.']
+  ['Liste blanche d’emails','restreindre la connexion à une liste d’adresses précises côté règles Firestore.']
 ];
 
 /* ── État ── */
@@ -78,7 +86,6 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => { const d=document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 const escA = s => esc(s).replace(/"/g,'&quot;');
-const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const fmtDate = s => { if(!s) return ''; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}); };
 const shortDate = s => { if(!s) return ''; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}); };
@@ -89,6 +96,11 @@ const prioOf = p => PRIO.find(x=>x.key===normPrio(p.priority)) || PRIO[1];
 const byId = id => S.points.find(p=>p.id===id);
 const nextId = () => S.points.length ? Math.max(...S.points.map(p=>p.id))+1 : 1;
 function normalize(arr){ return (arr||[]).map(p=>({ id:+p.id||0, title:String(p.title||'Sans titre'), desc:String(p.desc||''), addedDate:p.addedDate||todayISO(), status:STATUS.some(s=>s.label===p.status)?p.status:'À faire', priority:normPrio(p.priority), notes:String(p.notes||'') })); }
+async function copyText(txt){
+  try{ await navigator.clipboard.writeText(txt); return true; }
+  catch{ try{ const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch{ return false; } }
+}
 
 const IC = {
   pencil:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m13.5 6.5 3 3"/></svg>',
@@ -152,7 +164,7 @@ function loadLocal(){
     S = { points:normalize(SEED), meetingDate:todayISO(), prefs:{...DEFAULT_PREFS}, savedViews:structuredClone(SEED_VIEWS), activity:[], updatedAt:0 };
     return;
   }
-  try{ const d=JSON.parse(raw); S = hydrate(d); }catch{ S = { points:normalize(SEED), meetingDate:todayISO(), prefs:{...DEFAULT_PREFS}, savedViews:structuredClone(SEED_VIEWS), activity:[], updatedAt:0 }; }
+  try{ S = hydrate(JSON.parse(raw)); }catch{ S = { points:normalize(SEED), meetingDate:todayISO(), prefs:{...DEFAULT_PREFS}, savedViews:structuredClone(SEED_VIEWS), activity:[], updatedAt:0 }; }
 }
 function hydrate(d){
   return {
@@ -172,10 +184,7 @@ function save(log){
   $('#saveIndicator').textContent = '✓ Enregistré à ' + new Date().toLocaleTimeString('fr-FR');
   if(fb && user) queueCloud();
 }
-function pushActivity({type,label}){
-  S.activity.unshift({ ts:Date.now(), type, label });
-  S.activity = S.activity.slice(0,60);
-}
+function pushActivity({type,label}){ S.activity.unshift({ ts:Date.now(), type, label }); S.activity = S.activity.slice(0,60); }
 
 /* ── Filtrage / tri ── */
 function visible(){
@@ -250,10 +259,8 @@ function renderBulk(){
   document.body.classList.toggle('bulk-open', n>0);
   if(n) $('#bulkCount').textContent = `${n} point${n>1?'s':''} sélectionné${n>1?'s':''}`;
 }
-function badges(p,i){
-  const st=stOf(p), pr=prioOf(p);
-  return `<button class="prio-badge prio-${pr.key}" data-act="prio" data-id="${p.id}" type="button" title="Priorité ${pr.label} — cliquer pour changer"><span class="dot"></span>${pr.label}</button>`;
-}
+function prioBadge(p){ const pr=prioOf(p);
+  return `<button class="prio-badge prio-${pr.key}" data-act="prio" data-id="${p.id}" type="button" title="Priorité ${pr.label} — cliquer pour changer"><span class="dot"></span>${pr.label}</button>`; }
 function statusBadge(p){ const st=stOf(p); return `<button class="status-badge ${st.badge}" data-act="status" data-id="${p.id}" type="button" title="Changer le statut"><span class="dot"></span>${st.label}</button>`; }
 function descHTML(p){ return esc(p.desc).replace(/Voir le ticket GLPI/g,`<a href="${GLPI}" target="_blank" rel="noopener">Voir le ticket GLPI</a>`); }
 function selBox(p){ return `<input type="checkbox" class="pt-sel" data-sel="${p.id}" ${ui.sel.has(p.id)?'checked':''} aria-label="Sélectionner ce point">`; }
@@ -268,7 +275,7 @@ function listHTML(list){
         <span class="drag-handle" draggable="true" data-drag="${p.id}" title="Glisser pour réordonner">${IC.grip}</span>
         <div class="pt-meta">
           <button class="pt-title" data-act="open" data-id="${p.id}" type="button">${esc(p.title)}</button>
-          <div class="pt-sub">${IC.cal}Ajouté le ${fmtDate(p.addedDate)} ${badges(p)}</div>
+          <div class="pt-sub">${IC.cal}Ajouté le ${fmtDate(p.addedDate)} ${prioBadge(p)}</div>
         </div>
         <div class="pt-actions">${statusBadge(p)}
           <button class="btn-icon" data-act="open" data-id="${p.id}" type="button" title="Modifier ce point" aria-label="Modifier">${IC.pencil}</button>
@@ -290,27 +297,24 @@ function boardHTML(list){
     const items = list.filter(p=>stOf(p).key===s.key);
     return `<section class="bd-col" data-drop-status="${s.key}">
       <header class="bd-head"><span class="sq" style="background:var(${ST_VAR[s.key]})"></span>${s.label}<span class="n">${items.length}</span></header>
-      <div class="bd-list">${items.length ? items.map(p=>{
-        const pr=prioOf(p);
-        return `<article class="bd-card ${s.card} ${ui.sel.has(p.id)?'selected':''}" draggable="true" data-drag="${p.id}" data-drop-id="${p.id}" data-drop-status="${s.key}">
+      <div class="bd-list">${items.length ? items.map(p=>`<article class="bd-card ${s.card} ${ui.sel.has(p.id)?'selected':''}" draggable="true" data-drag="${p.id}" data-drop-id="${p.id}" data-drop-status="${s.key}">
           <div class="bd-top">${selBox(p)}<button class="bd-title" data-act="open" data-id="${p.id}" type="button">${esc(p.title)}</button>
             <button class="btn-icon danger" data-act="del" data-id="${p.id}" type="button" title="Supprimer" aria-label="Supprimer">${IC.trash}</button></div>
           ${p.notes?`<div class="bd-note">${esc(p.notes)}</div>`:''}
-          <div class="bd-foot"><button class="prio-badge prio-${pr.key}" data-act="prio" data-id="${p.id}" type="button"><span class="dot"></span>${pr.label}</button><span>${shortDate(p.addedDate)}</span></div>
-        </article>`;
-      }).join('') : '<div class="bd-empty">Déposez un point ici</div>'}</div>
+          <div class="bd-foot">${prioBadge(p)}<span>${shortDate(p.addedDate)}</span></div>
+        </article>`).join('') : '<div class="bd-empty">Déposez un point ici</div>'}</div>
     </section>`;
   }).join('');
 }
 function compactHTML(list){
   return `<div class="cp-head"><span></span><span></span><span>Point</span><span>Priorité</span><span>Statut</span><span>Date</span><span></span></div>` +
     list.map(p=>{
-      const st=stOf(p), pr=prioOf(p);
+      const st=stOf(p);
       return `<div class="cp-row ${st.card} ${ui.sel.has(p.id)?'selected':''}" data-drop-id="${p.id}">
         ${selBox(p)}
         <span class="drag-handle" draggable="true" data-drag="${p.id}" title="Glisser pour réordonner">${IC.grip}</span>
         <button class="cp-title" data-act="open" data-id="${p.id}" type="button" title="${escA(p.title)}">${esc(p.title)}</button>
-        <span class="cp-prio"><button class="prio-badge prio-${pr.key}" data-act="prio" data-id="${p.id}" type="button"><span class="dot"></span>${pr.label}</button></span>
+        <span class="cp-prio">${prioBadge(p)}</span>
         ${statusBadge(p)}
         <span class="cp-date">${shortDate(p.addedDate)}</span>
         <span class="cp-acts"><button class="btn-icon" data-act="open" data-id="${p.id}" type="button" title="Ouvrir" aria-label="Ouvrir">${IC.pencil}</button><button class="btn-icon danger" data-act="del" data-id="${p.id}" type="button" title="Supprimer" aria-label="Supprimer">${IC.trash}</button></span>
@@ -464,7 +468,7 @@ async function correct(ta,silent){
       if(focus){ ta.focus(); const pos=Math.max(0,Math.min(out.length,cursor+shift)); ta.setSelectionRange(pos,pos); }
     }
     if(!silent){ ind.textContent=n?`✓ ${n} correction${n>1?'s':''}`:'✓ Aucune faute'; ind.className='correction-indicator visible success'; setTimeout(()=>ind.className='correction-indicator',3000); }
-  }catch(e){ if(!silent){ ind.textContent='⚠️ Service indisponible'; ind.className='correction-indicator visible'; setTimeout(()=>ind.className='correction-indicator',3000); } }
+  }catch{ if(!silent){ ind.textContent='⚠️ Service indisponible'; ind.className='correction-indicator visible'; setTimeout(()=>ind.className='correction-indicator',3000); } }
   btn.disabled=false; btn.innerHTML=old;
 }
 
@@ -592,15 +596,43 @@ function updateAccount(){
   }else if(cfgPresent&&fb){ a.innerHTML=`<span class="sync-badge" id="syncBadge"></span><button class="btn btn-ghost btn-sm" data-acc="signin" type="button">${IC.login}Se connecter</button>`; setSync('local'); }
   else { a.innerHTML=`<span class="sync-badge" id="syncBadge"></span><button class="btn-icon" data-acc="setup" type="button" title="Assistant Firebase" aria-label="Assistant Firebase">${IC.gear}</button>`; setSync('local'); }
 }
-const AUTH_ERR={'auth/invalid-email':'Adresse email invalide.','auth/user-not-found':'Email ou mot de passe incorrect.','auth/wrong-password':'Email ou mot de passe incorrect.','auth/invalid-credential':'Email ou mot de passe incorrect.','auth/email-already-in-use':'Un compte existe déjà avec cet email.','auth/weak-password':'Mot de passe trop faible (6 caractères minimum).','auth/too-many-requests':'Trop de tentatives. Réessayez plus tard.','auth/network-request-failed':'Erreur réseau.','auth/operation-not-allowed':'Activez « Email/Mot de passe » dans Firebase Console.','auth/unauthorized-domain':'Domaine non autorisé : ajoutez votre domaine GitHub Pages dans Firebase.','auth/missing-password':'Veuillez saisir le mot de passe.'};
-function authErr(v,msg){ const el=$('#'+({login:'authError',signup:'authError2',reset:'authError3'}[v])); if(el){ el.innerHTML=IC.warn+'<span>'+esc(msg)+'</span>'; el.hidden=false; } }
-function clearAuthErr(){ ['authError','authError2','authError3'].forEach(i=>{const e=$('#'+i); if(e)e.hidden=true;}); }
+const AUTH_ERR={
+  'auth/invalid-email':'Adresse email invalide.',
+  'auth/user-not-found':'Aucun compte autorisé pour cette adresse. Contactez l’administrateur.',
+  'auth/wrong-password':'Email ou mot de passe incorrect.',
+  'auth/invalid-credential':'Email ou mot de passe incorrect.',
+  'auth/user-disabled':'Ce compte a été désactivé par l’administrateur.',
+  'auth/too-many-requests':'Trop de tentatives. Réessayez dans quelques minutes.',
+  'auth/network-request-failed':'Erreur réseau. Vérifiez votre connexion.',
+  'auth/operation-not-allowed':'Activez « Email/Mot de passe » dans Firebase Console.',
+  'auth/admin-restricted-operation':'Création de compte désactivée. Seul l’administrateur peut créer un accès.',
+  'auth/unauthorized-domain':'Domaine non autorisé : ajoutez votre domaine GitHub Pages dans Firebase.',
+  'auth/missing-password':'Veuillez saisir le mot de passe.'
+};
+function authErr(v,msg){ const el=$('#'+({login:'authError',reset:'authError3'}[v])); if(el){ el.innerHTML=IC.warn+'<span>'+esc(msg)+'</span>'; el.hidden=false; } }
+function clearAuthErr(){ ['authError','authError3'].forEach(i=>{const e=$('#'+i); if(e)e.hidden=true;}); }
 function showAuth(v){ clearAuthErr();
-  $('#authLoading').hidden=v!=='loading'; $('#loginForm').hidden=v!=='login'; $('#signupForm').hidden=v!=='signup'; $('#resetForm').hidden=v!=='reset'; $('#sentView').hidden=v!=='sent';
+  $('#authLoading').hidden=v!=='loading'; $('#loginForm').hidden=v!=='login'; $('#resetForm').hidden=v!=='reset'; $('#sentView').hidden=v!=='sent';
   if(v==='login') setTimeout(()=>$('#loginEmail').focus(),60);
-  if(v==='signup') setTimeout(()=>$('#signupEmail').focus(),60);
   if(v==='reset'){ const e=$('#loginEmail').value; if(e)$('#resetEmail').value=e; setTimeout(()=>$('#resetEmail').focus(),60); } }
 function busy(b,on,label){ b.disabled=on; b.innerHTML=on?'<span class="spinner"></span>Patience…':label; }
+
+/* ── Demande d'accès (aucune inscription possible) ── */
+function accessMessage(){
+  const url = location.origin && location.origin!=='null' ? location.href.split('#')[0] : 'le lien du site';
+  return `Bonjour,\n\nJe souhaite obtenir un accès à l'application « Suivi Réunion Prestataire ».\nAdresse du site : ${url}\nEmail à autoriser : \n\nMerci de créer le compte dans Firebase (Authentication → Users → Add user) et de me transmettre les identifiants.\n\nCordialement,`;
+}
+async function requestAccess(){
+  const note=$('#accessNote');
+  note.classList.remove('flash'); void note.offsetWidth; note.classList.add('flash');
+  if(ADMIN_CONTACT){
+    location.href = `mailto:${ADMIN_CONTACT}?subject=${encodeURIComponent('Demande d’accès — Suivi Réunion Prestataire')}&body=${encodeURIComponent(accessMessage())}`;
+    toast('Votre messagerie s’ouvre avec la demande pré-remplie.');
+    return;
+  }
+  const ok = await copyText(accessMessage());
+  toast(ok ? 'Demande copiée — envoyez-la à votre administrateur.' : 'Copie impossible : sélectionnez le texte manuellement.', {type: ok?'ok':'err', duration:5000});
+}
 
 /* ── Liaisons ── */
 function bind(){
@@ -718,25 +750,20 @@ function bind(){
     const b=$('#loginBtn'); busy(b,true);
     try{ await fb.au.signInWithEmailAndPassword(fb.auth,em,pw); }catch(err){ authErr('login',AUTH_ERR[err.code]||'Connexion impossible.'); }
     busy(b,false,'Se connecter'); });
-  $('#signupForm').addEventListener('submit',async e=>{ e.preventDefault(); clearAuthErr();
-    const em=$('#signupEmail').value.trim(), pw=$('#signupPass').value, p2=$('#signupPass2').value;
-    if(!em||!pw) return authErr('signup','Renseignez tous les champs.');
-    if(pw.length<6) return authErr('signup','Mot de passe trop faible (6 caractères minimum).');
-    if(pw!==p2) return authErr('signup','Les deux mots de passe ne correspondent pas.');
-    const b=$('#signupBtn'); busy(b,true);
-    try{ await fb.au.createUserWithEmailAndPassword(fb.auth,em,pw); toast('Compte créé — bienvenue !'); }catch(err){ authErr('signup',AUTH_ERR[err.code]||'Création impossible.'); }
-    busy(b,false,'Créer mon compte'); });
   $('#resetForm').addEventListener('submit',async e=>{ e.preventDefault(); clearAuthErr();
     const em=$('#resetEmail').value.trim(); if(!em) return authErr('reset','Renseignez votre adresse email.');
     const b=$('#resetBtn'); busy(b,true);
     try{ await fb.au.sendPasswordResetEmail(fb.auth,em); $('#sentEmail').textContent=em; showAuth('sent'); }catch(err){ authErr('reset',AUTH_ERR[err.code]||'Envoi impossible.'); }
     busy(b,false,'Envoyer le lien'); });
-  $('#toSignup').onclick=()=>showAuth('signup'); $('#toLogin').onclick=()=>showAuth('login');
-  $('#toReset').onclick=()=>showAuth('reset'); $('#backLogin').onclick=()=>showAuth('login'); $('#backLogin2').onclick=()=>showAuth('login');
+  $('#toReset').onclick=()=>showAuth('reset');
+  $('#backLogin').onclick=()=>showAuth('login');
+  $('#backLogin2').onclick=()=>showAuth('login');
+  $('#accessBtn').onclick=requestAccess;
+  $('#accessCopy').onclick=requestAccess;
   $('#localLink').onclick=()=>{ override=true; sessionStorage.setItem(K.OVR,'1'); $('#authOverlay').hidden=true; $('#app').hidden=false; updateAccount(); toast('Mode local — données sur cet appareil.'); };
   $('#authSetup').onclick=openSetup;
   $$('.eye').forEach(b=>{ b.innerHTML=IC.eye; b.onclick=()=>{ const i=$('#'+b.dataset.eye), s=i.type==='password'; i.type=s?'text':'password'; b.innerHTML=s?IC.eyeOff:IC.eye; }; });
-  ['loginEmail','loginPass','signupEmail','signupPass','signupPass2','resetEmail'].forEach(i=>$('#'+i).addEventListener('input',clearAuthErr));
+  ['loginEmail','loginPass','resetEmail'].forEach(i=>$('#'+i).addEventListener('input',clearAuthErr));
 
   $('#setupCancel').onclick=()=>$('#setupOverlay').hidden=true;
   $('#setupOverlay').addEventListener('click',e=>{ if(e.target.id==='setupOverlay') $('#setupOverlay').hidden=true; });
@@ -744,7 +771,7 @@ function bind(){
     if(!c){ const e=$('#configError'); e.innerHTML=IC.warn+'<span>Config incomplète : apiKey, projectId et appId sont requis.</span>'; e.hidden=false; return; }
     localStorage.setItem(K.CFG,JSON.stringify(c)); location.reload(); };
   $('#configClear').onclick=()=>{ localStorage.removeItem(K.CFG); location.reload(); };
-  $$('[data-copy]').forEach(b=>b.onclick=async()=>{ try{ await navigator.clipboard.writeText($('#'+b.dataset.copy).childNodes[0].textContent); b.textContent='Copié ✓'; }catch{ b.textContent='Échec'; } setTimeout(()=>b.textContent='Copier',1800); });
+  $$('[data-copy]').forEach(b=>b.onclick=async()=>{ const ok=await copyText($('#'+b.dataset.copy).childNodes[0].textContent); b.textContent=ok?'Copié ✓':'Échec'; setTimeout(()=>b.textContent='Copier',1800); });
 
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
@@ -756,6 +783,7 @@ function bind(){
       if(!$('#addForm').hidden) return $('#addForm').hidden=true;
     }
     if(typing()||e.metaKey||e.ctrlKey||e.altKey) return;
+    if($('#app').hidden) return;
     if(e.key==='/'){ e.preventDefault(); $('#searchInput').focus(); }
     if(e.key.toLowerCase()==='n'){ e.preventDefault(); $('#addToggle').click(); }
     if(['1','2','3'].includes(e.key)){ setPref({view:{'1':'list','2':'board','3':'compact'}[e.key]}); }
@@ -779,6 +807,7 @@ $('#sortSelect').value=ui.sort; $('#prioFilter').value=ui.prio;
 $('#newsDone').innerHTML=NEWS_DONE.map(([t,d])=>`<li><span><b>${esc(t)}</b> — ${esc(d)}</span></li>`).join('');
 $('#newsNext').innerHTML=NEWS_NEXT.map(([t,d])=>`<li><span><b>${esc(t)}</b> — ${esc(d)}</span></li>`).join('');
 if(localStorage.getItem(K.NEWS)) $('#newsBtn').classList.add('seen');
+if(ADMIN_CONTACT){ $('#accessCopy').textContent='Écrire à l’administrateur'; $('#accessBtn').textContent='Demander un accès'; }
 override = sessionStorage.getItem(K.OVR)==='1';
 syncAppearanceUI(); bind(); render();
 const cfg=effCfg(); cfgPresent=!!cfg;
