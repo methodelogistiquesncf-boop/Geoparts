@@ -1,0 +1,22 @@
+<!-- icons/icon.svg  ·  Icône principale (toutes tailles) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Suivi Réunion Prestataire">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a8410f"/>
+      <stop offset=".5" stop-color="#c96a1a"/>
+      <stop offset="1" stop-color="#e8b34a"/>
+    </linearGradient>
+    <radialGradient id="h" cx=".28" cy=".22" r=".7">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#g)"/>
+  <rect width="512" height="512" rx="115" fill="url(#h)"/>
+  <g fill="#fff8ef">
+    <rect x="77" y="130" width="358" height="43" rx="21.5"/>
+    <rect x="77" y="220" width="358" height="43" rx="21.5"/>
+    <rect x="77" y="310" width="215" height="43" rx="21.5"/>
+    <circle cx="367" cy="331.5" r="28.4"/>
+  </g>
+</svg>
