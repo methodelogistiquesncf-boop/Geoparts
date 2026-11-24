@@ -1,6 +1,5 @@
 <!-- ═══════════════════════════════════════════════════════════════
-     offline.html  ·  Repli de navigation quand l'app shell n'est
-     pas encore en cache. Autonome : aucune ressource externe.
+     offline.html  ·  Repli de navigation, autonome.
      ═══════════════════════════════════════════════════════════════ -->
 <!DOCTYPE html>
 <html lang="fr">
@@ -23,6 +22,7 @@ p{font-size:.9rem;color:#6d5638;margin-bottom:1rem}
 .state.on{background:#e2efd9;color:#3d7a34;border-color:#b9d8a8}
 button,a.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.7rem 1.2rem;border:none;border-radius:10px;font:600 .9rem 'Inter',sans-serif;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#bc5215,#e0a437);color:#fff8ef;box-shadow:0 3px 12px rgba(188,82,21,.25)}
 button:hover,a.btn:hover{transform:translateY(-1px)}
+a.ghost{background:#f7efe2;color:#6d5638;border:1px solid #e5d2b8;box-shadow:none;margin-left:.5rem}
 ul{list-style:none;text-align:left;font-size:.82rem;color:#6d5638;display:flex;flex-direction:column;gap:.5rem;margin:1.2rem 0}
 li{display:flex;gap:.55rem}
 li::before{content:'';width:.4rem;height:.4rem;border-radius:50%;background:#bc5215;margin-top:.55rem;flex:none}
@@ -40,17 +40,18 @@ li::before{content:'';width:.4rem;height:.4rem;border-radius:50%;background:#bc5
     <li>Installez l’application pour un démarrage immédiat, hors ligne compris.</li>
   </ul>
   <button id="retry" type="button">Réessayer</button>
-  <a class="btn" href="./index.html" style="margin-left:.5rem;background:#f7efe2;color:#6d5638;border:1px solid #e5d2b8;box-shadow:none">Ouvrir l’application</a>
+  <a class="btn ghost" href="./index.html">Ouvrir l’application</a>
 </main>
 <script>
 function paint(){
-  var on=navigator.onLine, st=document.getElementById('st');
-  st.className='state'+(on?' on':'');
-  document.getElementById('stTxt').textContent=on?'Réseau rétabli':'Réseau indisponible';
+  var on = navigator.onLine;
+  var st = document.getElementById('st');
+  st.className = 'state' + (on ? ' on' : '');
+  document.getElementById('stTxt').textContent = on ? 'Réseau rétabli' : 'Réseau indisponible';
 }
-document.getElementById('retry').addEventListener('click',function(){ location.replace('./index.html'); });
-addEventListener('online',function(){ paint(); setTimeout(function(){ location.replace('./index.html'); },600); });
-addEventListener('offline',paint);
+document.getElementById('retry').addEventListener('click', function(){ location.replace('./index.html'); });
+addEventListener('online', function(){ paint(); setTimeout(function(){ location.replace('./index.html'); }, 600); });
+addEventListener('offline', paint);
 paint();
 </script>
 </body>
